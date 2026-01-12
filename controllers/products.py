@@ -15,7 +15,7 @@ def create_product(db: Session, product_data: dict):
         print(" Database Commit SUCCESSFUL!")
         
         db.refresh(new_product)
-        print(f"📦 Final Product saved in DB: {new_product.name}")
+        print(f"Final Product saved in DB: {new_product.name}")
         return new_product
 
     except Exception as e:
@@ -25,4 +25,4 @@ def create_product(db: Session, product_data: dict):
         raise e
 
     finally:
-        print("--- DB DEBUG END ---")
+        print(" DB DEBUG END ")
