@@ -60,3 +60,13 @@ def delete_product(db: Session, product_id: str):
     db.commit()
     
     return {"message": f"Product {product_id} deleted successfully"}
+
+
+
+def get_product(db: Session, product_id: str):
+    db_product = db.query(Product).filter(Product.id == product_id).first()
+    
+    if not db_product:
+        raise HTTPException(status_code=404, detail="Product not found")
+        
+    return db_product

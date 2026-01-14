@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from config.db import get_db
-from controllers.products import create_product, get_all_products, update_product, delete_product
+from controllers.products import create_product, get_all_products, update_product, delete_product, get_product
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -48,3 +48,9 @@ def update_product_api(
 @router.delete('/deleteProduct/{product_id}')
 def delete_product_api(product_id: str, db: Session = Depends(get_db)):
     return delete_product(db, product_id)
+
+
+
+@router.get('/searchProduct/{product_id}')
+def fetch_single_product(product_id: str, db: Session = Depends(get_db)):
+    return get_product(db, product_id)
