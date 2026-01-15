@@ -1,70 +1,63 @@
 from sqlalchemy.orm import Session
 from models.products import Product
 from fastapi import HTTPException
+from sqlalchemy import or_
 
 def create_product(db: Session, product_data: dict):
-    print(f"Received data: {product_data}")
-
     try:
+        if "id" not in product_data or not product_data["id"]:
+            from models.products import generate_product_id
+            product_data["id"] = generate_product_id()
+
         new_product = Product(**product_data)
-        # print("Model created successfully.")
-        
         db.add(new_product)
-        # print(f"Attempting to COMMIT to Render Postgres (ID: {new_product.id})...")
-        
         db.commit()
-        # print("Database Commit SUCCESSFUL!")
-        
-        db.refresh(new_product)
-        # print(f"Final Product saved in DB: {new_product.name}")
+        db.refresh(new_product) 
         return new_product
-
     except Exception as e:
-        print("DATABASE ERROR occurred!")
-        print(f"Error details: {str(e)}")
-        db.rollback() 
-        raise e
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database Error: {str(e)}")
 
-    finally:
-        print(" DB DEBUG END ")
+def get_all_products(db: Session, search: str = None):
+    query = db.query(Product)
+    if search:
+        search_filter = f"%{search}%"
+        query = query.filter(
+            or_(
+                Product.name.ilike(search_filter),
+                Product.id.ilike(search_filter)
+            )
+        )
+    return query.all()
 
-
-
-def get_all_products(db: Session):
-    return db.query(Product).all()
-
-
-
-def update_product(db: Session, product_id: str, price: float, stock: int):
+def update_product(db: Session, product_id: str, update_data: dict):
     db_product = db.query(Product).filter(Product.id == product_id).first()
-    
     if not db_product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    db_product.price = price
-    db_product.stock_qty = stock
+    for key, value in update_data.items():
+        setattr(db_product, key, value)
 
     db.commit()
     db.refresh(db_product)
     return db_product
 
-
-
 def delete_product(db: Session, product_id: str):
     db_product = db.query(Product).filter(Product.id == product_id).first()
-    
     if not db_product:
         raise HTTPException(status_code=404, detail="Product not found")
 
     db.delete(db_product)
     db.commit()
-    
     return {"message": f"Product {product_id} deleted successfully"}
 
-
-
-def get_product(db: Session, product_id: str):
-    db_product = db.query(Product).filter(Product.id == product_id).first()
+def get_product_by_id(db: Session, identifier: str):
+    db_product = db.query(Product).filter(
+        or_(
+            Product.id.ilike(identifier),
+            Product.name.ilike(identifier)
+        )
+    ).first()
     
     if not db_product:
         raise HTTPException(status_code=404, detail="Product not found")
