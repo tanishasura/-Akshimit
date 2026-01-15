@@ -32,6 +32,7 @@ export default function CheckoutFilter({setFilterType, filterType}) {
                   <option value="Pink">Color: Pink</option>
                 </optgroup>
               </select>
+              
     </div>
   );
 }

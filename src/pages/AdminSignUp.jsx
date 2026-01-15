@@ -1,17 +1,23 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { BsEyeFill, BsEyeSlashFill } from "react-icons/bs";
 
-export default function SignIn() {
+export default function AdminSignUp() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
-  const [role, setRole] = useState("user"); 
-  const navigate = useNavigate();
 
   const validate = () => {
     let temp = {};
+
+    if (!name.trim()) {
+      temp.name = "Name is required";
+    } 
+    // else if (name.length < 3) {
+    //   temp.name = "Name must be at least 3 characters";
+    // }
 
     if (!email) {
       temp.email = "Email is required";
@@ -30,21 +36,10 @@ export default function SignIn() {
     return Object.keys(temp).length === 0;
   };
 
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-  //   if (validate()) {
-  //     alert("Signup Successful");
-  //   }
-  // };
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validate()) {
- 
-      const userData = { email, role, name: email.split('@')[0] };
-      localStorage.setItem("user_session", JSON.stringify(userData));
-      
-      alert(`Logged in as ${role}`);
-      navigate("/dashboard/checkout");
+      alert("Signup Successful");
     }
   };
 
@@ -59,6 +54,18 @@ export default function SignIn() {
         </div>
 
         <form onSubmit={handleSubmit}>
+          {/* Name */}
+          <div className="mb-4">
+            <label className="block text-md font-semibold mb-1">Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full border rounded-lg px-3 py-2"
+            />
+            {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+          </div>
+
           {/* Email */}
           <div className="mb-4">
             <label className="block text-md font-semibold mb-1">Email</label>
@@ -89,7 +96,7 @@ export default function SignIn() {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500"
               >
-                {showPassword ? <BsEyeFill /> : <BsEyeSlashFill />}
+                {showPassword ? <BsEyeFill /> : <BsEyeSlashFill /> }
               </span>
             </div>
 
@@ -98,40 +105,16 @@ export default function SignIn() {
             )}
           </div>
 
-          {/* Remember Me */}
-          {/* <div className="flex items-center mb-4">
-            <input type="checkbox" className="mr-2" />
-            <span className="text-sm text-black">Remember this Device</span>
-          </div> */}
-          {/* ADDED: Role Selection Toggle */}
-          <div className="mb-6">
-            <label className="block text-md font-semibold mb-2">Login as:</label>
-            <div className="flex gap-4">
-              <button 
-                type="button"
-                onClick={() => setRole("user")}
-                className={`flex-1 py-2 rounded-lg border transition-all ${role === 'user' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200'}`}
-              > User </button>
-              <button 
-                type="button"
-                onClick={() => setRole("admin")}
-                className={`flex-1 py-2 rounded-lg border transition-all ${role === 'admin' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200'}`}
-              > Admin </button>
-            </div>
-          </div>
-
           <button className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
-            Sign In
+            Sign Up
           </button>
 
-          {/* <p className="text-md mt-4">
-            New to Akshmit?{" "} */}
-            <div className="mt-4">
-                  <Link to="/adminSignUp" className="text-blue-600">
-                       Create an account
-                     </Link>
-                  </div>
-          {/* </p> */}
+          <p className="text-md mt-4">
+            Already have an Account?{" "}
+            <Link to="/adminSignIn" className="text-blue-600">
+              Sign in
+            </Link>
+          </p>
         </form>
       </div>
     </div>

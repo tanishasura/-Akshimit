@@ -1,6 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function InventoryTable({processedItems}) {
+    const navigate = useNavigate();
+    const session = JSON.parse(localStorage.getItem("user_session"));
+  const isAdmin = session?.role === "admin";
   return (
     <div>
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -30,11 +34,20 @@ export default function InventoryTable({processedItems}) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {processedItems.map((item) => (
-                <tr
-                  key={item.id}
-                  className="hover:bg-blue-50 transition-colors cursor-pointer group font-medium text-sm"
-                >
+            {processedItems.map((item) => (
+            <tr 
+              key={item.id}
+             
+              className={`border-b border-slate-50 last:border-none transition-colors ${
+                isAdmin ? "cursor-pointer hover:bg-slate-50" : "cursor-default"
+              }`}
+              
+              onClick={() => {
+                if (isAdmin) {
+                  navigate(`/dashboard/inventory/update/${item.id}`);
+                }
+              }}
+            >
                   <td className="px-6 py-4 text-slate-600 ">
                     {item.id}
                   </td>

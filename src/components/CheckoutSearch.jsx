@@ -3,7 +3,7 @@ import { IoIosSearch } from 'react-icons/io';
 
 export default function CheckoutSearch({setSearchTerm}) {
   return (
-    <div>
+    <div className='relative'>
        <input
                   type="text"
                   placeholder="Search ID or Name..."

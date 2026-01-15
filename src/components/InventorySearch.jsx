@@ -3,7 +3,7 @@ import { IoIosSearch } from 'react-icons/io';
 
 export default function InventorySearch({setSearchTerm}) {
   return (
-    <div>
+  <div className="w-full relative">
         <IoIosSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl" />
           <input
             type="text"
