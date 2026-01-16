@@ -17,18 +17,35 @@ def create_product(db: Session, product_data: dict):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Database Error: {str(e)}")
+    
 
-def get_all_products(db: Session, search: str = None):
+
+
+def get_all_products(db: Session, search: str = None, size: str = None, color: str = None, 
+                     section: str = None, brand: str = None, sort: str = None):
     query = db.query(Product)
+    
     if search:
         search_filter = f"%{search}%"
-        query = query.filter(
-            or_(
-                Product.name.ilike(search_filter),
-                Product.id.ilike(search_filter)
-            )
-        )
+        query = query.filter(or_(Product.name.ilike(search_filter), Product.id.ilike(search_filter)))
+    
+    if size and size != "all": query = query.filter(Product.size == size)
+    if color and color != "all": query = query.filter(Product.color == color)
+    if section and section != "all": query = query.filter(Product.section == section)
+    if brand and brand != "all": query = query.filter(Product.brand == brand)
+
+    if sort == "lowToHigh":
+        query = query.order_by(Product.price.asc())
+    elif sort == "highToLow":
+        query = query.order_by(Product.price.desc())
+    elif sort == "alphabetical":
+        query = query.order_by(Product.name.asc())
+
     return query.all()
+
+
+
+
 
 def update_product(db: Session, product_id: str, update_data: dict):
     db_product = db.query(Product).filter(Product.id == product_id).first()

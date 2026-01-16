@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from config.db import get_db
-from controllers.transaction import create_bulk_transaction, get_all_transactions
+from controller.transaction import create_bulk_transaction, get_all_transactions
 from pydantic import BaseModel
 from typing import List
 

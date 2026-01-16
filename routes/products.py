@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from config.db import get_db
-from controllers.products import create_product, get_all_products, get_product_by_id, update_product, delete_product
+from controller.products import create_product, get_all_products, get_product_by_id, update_product, delete_product
 from pydantic import BaseModel
 from typing import Optional
 
@@ -23,8 +23,24 @@ class ProductUpdate(BaseModel):
     stock_qty: Optional[int] = None
 
 @router.get('/products')
-def get_products(search: Optional[str] = None, db: Session = Depends(get_db)):
-    return get_all_products(db, search=search)
+def get_products(
+    search: Optional[str] = None, 
+    size: Optional[str] = None,
+    color: Optional[str] = None,
+    section: Optional[str] = None,
+    brand: Optional[str] = None,
+    sort: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    return get_all_products(
+        db, 
+        search=search, 
+        size=size, 
+        color=color, 
+        section=section, 
+        brand=brand,
+        sort=sort
+    )
 
 @router.get('/products/{identifier}')
 def get_product(identifier: str, db: Session = Depends(get_db)):
