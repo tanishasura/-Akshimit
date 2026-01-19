@@ -48,7 +48,7 @@ export default function InventoryTable({processedItems}) {
                 }
               }}
             >
-                  <td className="px-6 py-4 text-slate-600 ">
+                  <td className="px-6 py-4  font-semibold ">
                     {item.id}
                   </td>
                   <td className="px-6 py-4 text-slate-800">{item.name}</td>
@@ -57,7 +57,7 @@ export default function InventoryTable({processedItems}) {
                       {item.size}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center text-slate-800 ">
+                  <td className="px-6 py-4 text-center font-semibold ">
                     ₹{item.price}
                   </td>
                   <td className="px-6 py-4 text-center text-slate-800 ">

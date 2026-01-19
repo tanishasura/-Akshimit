@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { BsEyeFill, BsEyeSlashFill } from "react-icons/bs";
 
 export default function SignUp() {
@@ -8,6 +8,8 @@ export default function SignUp() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+
+  const navigate = useNavigate();
 
   const validate = () => {
     let temp = {};
@@ -36,12 +38,33 @@ export default function SignUp() {
     return Object.keys(temp).length === 0;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validate()) {
-      alert("Signup Successful");
+const handleSubmit = (e) => {
+  e.preventDefault();
+  if (validate()) {
+    const existingUsers = JSON.parse(localStorage.getItem("registered_users")) || [];
+    const ADMIN_EMAIL = "admin@akshmit.com";
+
+    if (existingUsers.find(u => u.email === email)) {
+      setErrors({ email: "Email already registered. Please Sign In." });
+      return;
     }
-  };
+
+    const assignedRole = (email === ADMIN_EMAIL) ? "admin" : "user";
+
+    const newUser = { 
+      name, 
+      email, 
+      password, 
+      role: assignedRole 
+    };
+
+    existingUsers.push(newUser);
+    localStorage.setItem("registered_users", JSON.stringify(existingUsers));
+
+    alert(`${assignedRole === 'admin' ? 'Admin' : 'User'} Signup Successful!`);
+    navigate("/signIn");
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-200">

@@ -1,16 +1,45 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios"; 
+import axios from "axios";
 
 export default function Transaction() {
   const location = useLocation();
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true); 
+  const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
 
   const session = JSON.parse(localStorage.getItem("user_session"));
   const isAdmin = session?.role === "admin";
+
+
+  const formatDateTime = (dateString) => {
+    const dateObj = new Date(dateString);
+    
+    // 19/01/2026
+    const date = dateObj.toLocaleDateString("en-GB");
+    
+    //19:05:30 
+    const time = dateObj.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+
+    return { date, time };
+  };
+
+  const renderDateTime = (rawDate) => {
+    const { date, time } = formatDateTime(rawDate);
+    return (
+      <div className="flex flex-col">
+        <span className="font-medium text-slate-700">{date}</span>
+        <span className="text-xs text-slate-400 font-mono">{time}</span>
+      </div>
+    );
+  };
+
 
   useEffect(() => {
     if (!isAdmin) {
@@ -23,8 +52,7 @@ export default function Transaction() {
       try {
         setLoading(true);
         const response = await axios.get("http://127.0.0.1:8000/transactions");
-        
-        const reversedData = response.data.reverse(); 
+        const reversedData = response.data.reverse();
         setTransactions(reversedData);
       } catch (error) {
         console.error("Error fetching transaction history:", error);
@@ -64,7 +92,9 @@ export default function Transaction() {
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-          <h3 className="font-bold text-2xl text-slate-700">Transaction History</h3>
+          <h3 className="font-bold text-2xl text-slate-700">
+            Transaction History
+          </h3>
         </div>
 
         <div className="overflow-x-auto">
@@ -85,7 +115,10 @@ export default function Transaction() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {transactions.map((txn) => (
-                    <tr key={txn.id} className="hover:bg-slate-50 transition-colors">
+                    <tr
+                      key={txn.id}
+                      className="hover:bg-slate-50 transition-colors"
+                    >
                       <td
                         className="p-4 text-blue-600 font-mono font-bold cursor-pointer select-none blur-[2.5px] hover:blur-none transition-all duration-300"
                         onClick={() => copyToClipboard(txn.id)}
@@ -93,8 +126,12 @@ export default function Transaction() {
                       >
                         {txn.id}
                       </td>
-                      <td className="p-4 text-slate-600">{txn.date}</td>
-                      <td className="p-4 font-bold text-slate-800">₹{txn.amount}</td>
+                      <td className="p-4">
+                        {renderDateTime(txn.date)}
+                      </td>
+                      <td className="p-4 font-bold text-slate-800">
+                        ₹{txn.amount}
+                      </td>
                       <td className="p-4">
                         <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-[11px] font-bold">
                           {txn.method}
@@ -107,7 +144,7 @@ export default function Transaction() {
 
               {transactions.length === 0 && (
                 <div className="p-20 text-center text-slate-400 font-medium">
-                  No transactions 
+                  No transactions
                 </div>
               )}
             </>

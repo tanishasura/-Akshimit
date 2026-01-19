@@ -7,7 +7,6 @@ export default function SignIn() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
-  const [role, setRole] = useState("user"); 
   const navigate = useNavigate();
 
   const validate = () => {
@@ -36,17 +35,37 @@ export default function SignIn() {
   //     alert("Signup Successful");
   //   }
   // };
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validate()) {
- 
-      const userData = { email, role, name: email.split('@')[0] };
+const handleSubmit = (e) => {
+  e.preventDefault();
+  if (validate()) {
+    const registeredUsers = JSON.parse(localStorage.getItem("registered_users")) || [];
+
+    const userFound = registeredUsers.find(
+      (u) => u.email === email && u.password === password
+    );
+
+    if (userFound) {
+      const userData = { 
+        email: userFound.email, 
+        role: userFound.role, 
+        name: userFound.name 
+      };
+      
       localStorage.setItem("user_session", JSON.stringify(userData));
       
-      alert(`Logged in as ${role}`);
+      alert(`Welcome, ${userFound.name}! Logged in as ${userFound.role}`);
       navigate("/dashboard/checkout");
+    } else {
+      const emailExists = registeredUsers.find((u) => u.email === email);
+      if (!emailExists) {
+        alert("Account not found. Please register first.");
+        navigate("/signUp");
+      } else {
+        setErrors({ password: "Incorrect password. Please try again." });
+      }
     }
-  };
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-200">
@@ -104,7 +123,7 @@ export default function SignIn() {
             <span className="text-sm text-black">Remember this Device</span>
           </div> */}
           {/* ADDED: Role Selection Toggle */}
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <label className="block text-md font-semibold mb-2">Login as:</label>
             <div className="flex gap-4">
               <button 
@@ -118,7 +137,7 @@ export default function SignIn() {
                 className={`flex-1 py-2 rounded-lg border transition-all ${role === 'admin' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200'}`}
               > Admin </button>
             </div>
-          </div>
+          </div> */}
 
           <button className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
             Sign In
@@ -127,7 +146,7 @@ export default function SignIn() {
           {/* <p className="text-md mt-4">
             New to Akshmit?{" "} */}
             <div className="mt-4">
-                  <Link to="/adminSignUp" className="text-blue-600">
+                  <Link to="/signUp" className="text-blue-600">
                        Create an account
                      </Link>
                   </div>

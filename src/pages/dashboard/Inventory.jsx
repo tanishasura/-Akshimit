@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import axios from "axios"; 
 import { IoMdAdd } from "react-icons/io";
 import { Link, useNavigate } from "react-router-dom";
 import InventorySearch from "../../components/InventorySearch";
 import InventoryFilter from "../../components/InventoryFilter";
 import InventoryTable from "../../components/InventoryTable";
+import InventorySort from "../../components/InventorySort";
 
 export default function Inventory() {
   const navigate = useNavigate();
@@ -14,43 +15,49 @@ export default function Inventory() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("all");
+  const [sortType, setSortType] = useState("default");
+
+  const [filters, setFilters] = useState({
+    section: "all",
+    size: "all",
+    brand: "all",
+    color: "all",
+  });
+
+  const fetchProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("http://127.0.0.1:8000/products", {
+        params: { 
+          search: searchTerm,
+          size: filters.size === "all" ? null : filters.size,
+          color: filters.color === "all" ? null : filters.color,
+          section: filters.section === "all" ? null : filters.section,
+          brand: filters.brand === "all" ? null : filters.brand
+        }
+      });
+      setItems(response.data); 
+    } catch (error) {
+      console.error("Error fetching inventory:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchTerm, filters]);
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get("http://127.0.0.1:8000/products", {
-          params: { search: searchTerm }
-        });
-        setItems(response.data); 
-      } catch (error) {
-        console.error("Error fetching inventory:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     const delay = setTimeout(fetchProducts, 300);
     return () => clearTimeout(delay);
-  }, [searchTerm]);
+  }, [fetchProducts]);
 
   const brands = useMemo(() => [...new Set(items.map((item) => item.brand))], [items]);
   const sections = useMemo(() => [...new Set(items.map((item) => item.section))], [items]);
   const colors = useMemo(() => [...new Set(items.map((item) => item.color))], [items]);
-  const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
+  const sizes =useMemo(() => [...new Set(items.map((item) => item.size))], [items]);
 
- 
-  let processedItems = [...items]; 
-
-  if (filterType === "lowToHigh") processedItems.sort((a, b) => a.price - b.price);
-  else if (filterType === "highToLow") processedItems.sort((a, b) => b.price - a.price);
-  else if (filterType === "alphabetical") processedItems.sort((a, b) => a.name.localeCompare(b.name));
-
-  if (sizes.includes(filterType)) processedItems = processedItems.filter((item) => item.size === filterType);
-  if (brands.includes(filterType)) processedItems = processedItems.filter((item) => item.brand === filterType);
-  if (sections.includes(filterType)) processedItems = processedItems.filter((item) => item.section === filterType);
-  if (colors.includes(filterType)) processedItems = processedItems.filter((item) => item.color === filterType);
+  let processedItems = [...items];
+  if (sortType === "lowToHigh") processedItems.sort((a, b) => a.price - b.price);
+  else if (sortType === "highToLow") processedItems.sort((a, b) => b.price - a.price);
+  else if (sortType === "alphabetical") processedItems.sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="space-y-6">
@@ -70,19 +77,22 @@ export default function Inventory() {
         <div className="relative flex-1 w-full">
           <InventorySearch setSearchTerm={setSearchTerm} />
         </div>
-        <InventoryFilter
-          filterType={filterType}
-          setFilterType={setFilterType}
-          sections={sections}
-          sizes={sizes}
-          brands={brands}
-          colors={colors}
-        />
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <InventoryFilter
+            filters={filters}
+            setFilters={setFilters}
+            sections={sections}
+            sizes={sizes}
+            brands={brands}
+            colors={colors}
+          />
+          <InventorySort sortType={sortType} setSortType={setSortType} />
+        </div>
       </div>
 
       {loading ? (
-        <div className="p-20 text-center text-xl font-bold text-slate-500">
-         Loading...
+        <div className="p-20 text-center text-xl font-bold text-slate-500 animate-pulse">
+          Loading Inventory...
         </div>
       ) : (
         <InventoryTable 
