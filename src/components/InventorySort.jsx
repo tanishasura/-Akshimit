@@ -34,7 +34,7 @@ export default function InventorySort({ sortType, setSortType }) {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)}></div>
           
-\          <div className="absolute left-0 right-0 mt-2 z-50 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden min-w-full">
+      <div className="absolute left-0 right-0 mt-2 z-50 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden min-w-full">
             <div className="p-1">
               {options.map((opt) => (
                 <button
