@@ -2,12 +2,15 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { IoMdSave, IoMdTrash } from "react-icons/io";
 import axios from "axios";
+import { jsPDF } from "jspdf";
+import { MdQrCodeScanner } from "react-icons/md";
 
 export default function Update() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+const [isDownloading, setIsDownloading] = useState(false);
 
   const session = JSON.parse(localStorage.getItem("user_session"));
   const isAdmin = session?.role === "admin";
@@ -63,14 +66,72 @@ export default function Update() {
   if (!isAdmin) return null; 
   if (loading) return <div className="p-10 text-center font-bold text-slate-500">Connecting to Server...</div>;
 
+
+  const handleDownloadSingleQR = async () => {
+    setIsDownloading(true);
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: [80, 80], 
+    });
+
+    const getBase64Image = (url) => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL("image/png"));
+        };
+        img.onerror = reject;
+        img.src = url;
+      });
+    };
+
+    try {
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${product.id}`;
+      const base64 = await getBase64Image(qrUrl);
+      
+      doc.addImage(base64, "PNG", 15, 5, 50, 50); 
+      doc.setFontSize(12);
+      doc.text(`ID: ${product.id}`, 40, 62, { align: "center" });
+      doc.setFontSize(10);
+      doc.text(product.name, 40, 68, { align: "center" });
+      
+      doc.save(`QR_${product.id}.pdf`);
+    } catch (err) {
+      console.error("QR Generation failed", err);
+      alert("Failed to generate QR code image.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+        <div className="flex justify-between items-start mb-6">
         <h2 className="text-2xl font-bold mb-6 text-slate-800">Update {product.name}</h2>
+
+        <button 
+            type="button"
+            onClick={handleDownloadSingleQR}
+            disabled={isDownloading}
+            className="flex items-center gap-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg transition-colors font-semibold"
+          >
+            <MdQrCodeScanner className="text-blue-600 text-lg" />
+            {isDownloading ? "Generating..." : "Download QR"}
+          </button>
+
+          </div>
+
         
         <form onSubmit={handleUpdate} className="space-y-4">
          
-
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-1">Price (₹)</label>
             <input 
