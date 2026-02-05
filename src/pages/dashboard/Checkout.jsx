@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
-import AddedItems from "../../components/AddedItems";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import CheckoutButton from "../../components/CheckoutButton";
+import AddedItems from "../../components/AddedItems";
 import PaymentModal from "../../components/PaymentModal";
 import CheckoutSearch from "../../components/CheckoutSearch";
 import CheckoutFilter from "../../components/CheckoutFilter";
@@ -9,6 +9,7 @@ import axios from "axios";
 
 export default function Checkout() {
   const navigate = useNavigate();
+  const quickAddInputRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
     size: "all",
@@ -24,6 +25,33 @@ export default function Checkout() {
   const [quickAddError, setQuickAddError] = useState(""); 
   const [showModal, setShowModal] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0); 
+
+
+useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if (
+        document.activeElement.tagName === "INPUT" || 
+        document.activeElement.tagName === "TEXTAREA" ||
+        showModal
+      ) {
+        return;
+      }
+
+      if (e.key.length === 1) {
+       
+        quickAddInputRef.current?.focus();
+
+       
+        setQuickAddId((prev) => {
+          const newValue = (prev + e.key).toUpperCase();
+          return newValue.slice(0, 8); 
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [showModal]);
 
   const brands = useMemo(() => [...new Set(items.map((i) => i.brand))].filter(Boolean), [items]);
   const colors = useMemo(() => [...new Set(items.map((i) => i.color))].filter(Boolean), [items]);
@@ -194,6 +222,7 @@ export default function Checkout() {
             <div className="font-bold text-slate-700 mb-2">Quick add</div>
             <input 
               type="text" 
+              ref={quickAddInputRef}
               value={quickAddId}
               placeholder="eg:ABCD1234"
               maxLength={8}
