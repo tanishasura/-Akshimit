@@ -6,13 +6,15 @@ export default function InventoryTable({ processedItems }) {
   const session = JSON.parse(localStorage.getItem("user_session"));
   const isAdmin = session?.role === "admin";
 
+  const inStockItems = processedItems.filter(item => item.stock_qty > 0);
+
   return (
     <div>
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
           <div className="font-bold text-2xl text-slate-700">All Product Details</div>
           <div className="text-sm text-slate-500 font-medium">
-            Showing {processedItems.length} products
+          Showing {inStockItems.length} products
           </div>
         </div>
 
@@ -33,7 +35,7 @@ export default function InventoryTable({ processedItems }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {processedItems.map((item) => (
+           {inStockItems.map((item) => (
                 <tr
                   key={item.id}
                   className={`border-b border-slate-50 last:border-none transition-colors ${
