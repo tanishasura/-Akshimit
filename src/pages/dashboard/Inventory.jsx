@@ -61,67 +61,57 @@ export default function Inventory() {
   else if (sortType === "highToLow") processedItems.sort((a, b) => b.price - a.price);
   else if (sortType === "alphabetical") processedItems.sort((a, b) => a.name.localeCompare(b.name));
 
- const handleDownloadAllQR = async () => {
-  const doc = new jsPDF();
-  const qrSize =10;
-  const padding = 10;
-  let x = padding;
-  let y = padding;
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-
-  const getBase64Image = (url) => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = "Anonymous";
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
-        resolve(canvas.toDataURL("image/png"));
-      };
-      img.onerror = reject;
-      img.src = url;
+const handleDownloadAllQR = async () => {
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: [80, 80], 
     });
-  };
 
-  console.log("Generating PDF...");
+    const getBase64Image = (url) => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL("image/png"));
+        };
+        img.onerror = reject;
+        img.src = url;
+      });
+    };
 
-  for (let i = 0; i < processedItems.length; i++) {
-    const item = processedItems[i];
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${item.id}`;
-    
-    try {
-      const base64 = await getBase64Image(qrUrl);
+    for (let i = 0; i < processedItems.length; i++) {
+      const item = processedItems[i];
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${item.id}`;
       
-      doc.addImage(base64, "PNG", x, y, qrSize, qrSize);
-      
-      doc.setFontSize(8);
-      doc.text(`ID: ${item.id}`, x, y + qrSize + 5);
-      doc.text(item.name.substring(0, 20), x, y + qrSize + 10);
+      try {
+        const base64 = await getBase64Image(qrUrl);
+        
+        if (i > 0) doc.addPage([80, 80], "portrait");
 
-      x += qrSize + padding;
-      
-      if (x + qrSize > pageWidth) {
-        x = padding;
-        y += qrSize + 20;
+       const qrSize = 20;
+        const pageWidth = 80;
+        const xPos = (pageWidth - qrSize) / 2; 
+        const yPos = 15;
+
+        doc.addImage(base64, "PNG", xPos, yPos, qrSize, qrSize); 
+
+        doc.setFontSize(6);
+        doc.text(`ID: ${item.id}`, 40, yPos + qrSize + 8, { align: "center" });
+        
+        doc.setFontSize(5);
+        doc.text(item.name.substring(0, 30), 40, yPos + qrSize + 14, { align: "center" });
+      } catch (err) {
+        console.error("Failed to load QR for item", item.id);
       }
-
-      if (y + qrSize + 20 > pageHeight) {
-        doc.addPage();
-        x = padding;
-        y = padding;
-      }
-    } catch (err) {
-      console.error("Failed to load QR for item", item.id);
     }
-  }
-
-  doc.save("Inventory_QRCodes.pdf");
-};
-
+    doc.save("Inventory_All_QRCodes.pdf");
+  };
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
