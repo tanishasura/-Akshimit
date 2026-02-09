@@ -18,6 +18,7 @@ export default function Inventory() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortType, setSortType] = useState("default");
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const [filters, setFilters] = useState({
     section: "all",
@@ -61,57 +62,187 @@ export default function Inventory() {
   else if (sortType === "highToLow") processedItems.sort((a, b) => b.price - a.price);
   else if (sortType === "alphabetical") processedItems.sort((a, b) => a.name.localeCompare(b.name));
 
-const handleDownloadAllQR = async () => {
-    const doc = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: [80, 80], 
-    });
 
-    const getBase64Image = (url) => {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = "Anonymous";
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          canvas.width = img.width;
-          canvas.height = img.height;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0);
-          resolve(canvas.toDataURL("image/png"));
-        };
-        img.onerror = reject;
-        img.src = url;
-      });
-    };
+// const handleDownloadAllQR = async () => {
+//   setIsDownloading(true);
+//   const doc = new jsPDF({
+//     orientation: "portrait",
+//     unit: "mm",
+//     format: [40, 40], // Decreased page size to 40x40mm
+//   });
 
-    for (let i = 0; i < processedItems.length; i++) {
-      const item = processedItems[i];
-      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${item.id}`;
+//   const getBase64Image = (url) => {
+//     return new Promise((resolve, reject) => {
+//       const img = new Image();
+//       img.crossOrigin = "Anonymous";
+//       img.onload = () => {
+//         const canvas = document.createElement("canvas");
+//         canvas.width = img.width;
+//         canvas.height = img.height;
+//         const ctx = canvas.getContext("2d");
+//         ctx.drawImage(img, 0, 0);
+//         resolve(canvas.toDataURL("image/png"));
+//       };
+//       img.onerror = reject;
+//       img.src = url;
+//     });
+//   };
+
+//   try {
+//     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${product.id}`;
+//     const base64 = await getBase64Image(qrUrl);
+    
+//     // Centers the 25mm QR code on the 40mm page (left margin: 7.5mm)
+//     doc.addImage(base64, "PNG", 7.5, 3, 25, 25); 
+    
+//     // ID Text - Centered at X=20
+//     doc.setFontSize(9);
+//     doc.text(`ID: ${product.id}`, 20, 32, { align: "center" });
+    
+//     // Product Name - Centered at X=20
+//     doc.setFontSize(7);
+//     // Truncate name if it's too long for the small 40mm width
+//     const displayName = product.name.length > 25 ? product.name.substring(0, 22) + "..." : product.name;
+//     doc.text(displayName, 20, 37, { align: "center" });
+    
+//     doc.save(`QR_${product.id}.pdf`);
+//   } catch (err) {
+//     console.error("QR Generation failed", err);
+//     alert("Failed to generate QR code image.");
+//   } finally {
+//     setIsDownloading(false);
+//   }
+// };
+  
+
+// const handleDownloadAllQR = async () => {
+  
+//     const doc = new jsPDF({
+//       orientation: "portrait",
+//       unit: "mm",
+//       format: [80, 80], 
+//     });
+
+//     const getBase64Image = (url) => {
+//       return new Promise((resolve, reject) => {
+//         const img = new Image();
+//         img.crossOrigin = "Anonymous";
+//         img.onload = () => {
+//           const canvas = document.createElement("canvas");
+//           canvas.width = img.width;
+//           canvas.height = img.height;
+//           const ctx = canvas.getContext("2d");
+//           ctx.drawImage(img, 0, 0);
+//           resolve(canvas.toDataURL("image/png"));
+//         };
+//         img.onerror = reject;
+//         img.src = url;
+//       });
+//     };
+
+//     for (let i = 0; i < processedItems.length; i++) {
+//       const item = processedItems[i];
+//       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${item.id}`;
       
-      try {
-        const base64 = await getBase64Image(qrUrl);
+//       try {
+//         const base64 = await getBase64Image(qrUrl);
         
-        if (i > 0) doc.addPage([80, 80], "portrait");
+//         if (i > 0) doc.addPage([80, 80], "portrait");
 
-       const qrSize = 20;
-        const pageWidth = 80;
-        const xPos = (pageWidth - qrSize) / 2; 
-        const yPos = 15;
+//         // Inside the for-loop
+// const qrSize = 15; // Smaller QR to fit small page
+// const pageWidth = 50; 
+// const pageHeight = 25;
+// const xPos = 2; // Move to the left
+// const yPos = 5; // Center vertically
 
-        doc.addImage(base64, "PNG", xPos, yPos, qrSize, qrSize); 
+// // Add QR Code
+// doc.addImage(base64, "PNG", xPos, yPos, qrSize, qrSize); 
 
-        doc.setFontSize(6);
-        doc.text(`ID: ${item.id}`, 40, yPos + qrSize + 8, { align: "center" });
+// // Adjust Text Position (to the right of the QR code)
+// doc.setFontSize(7);
+// doc.text(`ID: ${item.id}`, 20, 10); // x=20 moves text to the right of QR
+
+// doc.setFontSize(6);
+// const shortName = item.name.substring(0, 20);
+// doc.text(shortName, 20, 16);
+
+//       //  const qrSize = 20;
+//       //   const pageWidth = 80;
+//       //   const xPos = (pageWidth - qrSize) / 2; 
+//       //   const yPos = 15;
+
+//       //   doc.addImage(base64, "PNG", xPos, yPos, qrSize, qrSize); 
+
+//       //   doc.setFontSize(6);
+//       //   doc.text(`ID: ${item.id}`, 40, yPos + qrSize + 8, { align: "center" });
         
-        doc.setFontSize(5);
-        doc.text(item.name.substring(0, 30), 40, yPos + qrSize + 14, { align: "center" });
-      } catch (err) {
-        console.error("Failed to load QR for item", item.id);
-      }
-    }
-    doc.save("Inventory_All_QRCodes.pdf");
+//       //   doc.setFontSize(5);
+//       //   doc.text(item.name.substring(0, 30), 40, yPos + qrSize + 14, { align: "center" });
+//       } catch (err) {
+//         console.error("Failed to load QR for item", item.id);
+//       }
+//     }
+//     doc.save("Inventory_All_QRCodes.pdf");
+//   };
+
+
+const handleDownloadAllQR = async () => {
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: [30, 30], 
+  });
+
+  const getBase64Image = (url) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "Anonymous";
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL("image/png"));
+      };
+      img.onerror = reject;
+      img.src = url;
+    });
   };
+
+  for (let i = 0; i < processedItems.length; i++) {
+    const item = processedItems[i];
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${item.id}`;
+    
+    try {
+      const base64 = await getBase64Image(qrUrl);
+      
+      if (i > 0) doc.addPage([30, 30], "portrait");
+
+      const pageWidth = 30;
+      const qrSize = 10;
+      const xPos = (pageWidth - qrSize) / 2; 
+      const yPos = 1;
+
+      doc.addImage(base64, "PNG", xPos, yPos, qrSize, qrSize); 
+
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.text(`ID: ${item.id}`, pageWidth / 2, yPos + qrSize + 3, { align: "center" });
+
+      doc.setFontSize(6);
+      doc.setFont("helvetica", "normal");
+      const shortName = item.name.length > 22 ? item.name.substring(0, 20) + "..." : item.name;
+      doc.text(shortName, pageWidth / 2, yPos + qrSize + 5.5, { align: "center" });
+
+    } catch (err) {
+      console.error("Failed to load QR for item", item.id);
+    }
+  }
+  doc.save("Compact_QR_Labels.pdf");
+};
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
