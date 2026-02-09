@@ -6,8 +6,7 @@ from sqlalchemy.orm import sessionmaker
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-DATABASE_URL = "postgresql://akshmit_db_user:tutWMMUvmGBQE6ka50I99X0BCvfhkrYR@dpg-d5h49u14tr6s739bg0e0-a.virginia-postgres.render.com/akshmit_db"
-
+DATABASE_URL = "postgresql://akshmit_db_v2_user:ziVMah5SYv9RUasyaubYOUYfcKlweM8R@dpg-d64vlma4d50c73eqm9s0-a.virginia-postgres.render.com/akshmit_db_v2"
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
