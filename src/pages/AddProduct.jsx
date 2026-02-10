@@ -17,6 +17,7 @@ export default function AddProduct() {
     stock_qty: "",
     section: "",
     type: "",
+    // gst: "5",
   });
 
   const colorOptions = [
@@ -51,6 +52,7 @@ export default function AddProduct() {
         ...formData,
         price: parseFloat(formData.price),
         stock_qty: parseInt(formData.stock_qty),
+        // gst: parseFloat(formData.gst),
       };
 
       const response = await axios.post("http://127.0.0.1:8000/products", payload);
@@ -115,7 +117,7 @@ export default function AddProduct() {
           </div>
 
           {/* Section, Price, Stock */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
              <div className="flex flex-col gap-2">
               <label className="text-sm font-bold text-slate-700">Section</label>
               <select name="section" required onChange={handleChange} className="border border-slate-300 rounded-lg p-2.5 bg-white">
@@ -129,6 +131,10 @@ export default function AddProduct() {
               <label className="text-sm font-bold text-slate-700">Price (₹)</label>
               <input name="price" required onChange={handleChange} type="number" className="border border-slate-300 rounded-lg p-2.5" />
             </div>
+            {/* <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-slate-700">GST (%)</label>
+              <input name="gst" value={formData.gst} required onChange={handleChange} type="number" className="border border-slate-300 rounded-lg p-2.5 text-black font-bold" placeholder="5" />
+            </div> */}
             <div className="flex flex-col gap-2">
               <label className="text-sm font-bold text-slate-700">Stock Qty</label>
               <input name="stock_qty" required onChange={handleChange} type="number" className="border border-slate-300 rounded-lg p-2.5" />

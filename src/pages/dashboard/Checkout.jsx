@@ -201,42 +201,83 @@ export default function Checkout() {
     );
   };
 
-  const handleConfirmPayment = async (method) => {
+const handleConfirmPayment = async (method, customerInfo) => {
+  if (!customerInfo) return;
     const transactionId = `TXN-${Date.now()}`;
     const transactionData = {
-      id: transactionId,
-      date: new Date().toISOString().split("T")[0],
-      amount: totalAmount,
-      method: method,
-      items: cart.map((item) => ({ id: item.id, qty: item.qty })),
+        id: transactionId,
+        date: new Date().toISOString(), 
+        amount: totalAmount,
+        method: method,
+        customer_name: customerInfo.name,
+        customer_phone: customerInfo.phone,
+        items: cart.map((item) => ({ id: item.id, qty: item.qty })),
     };
 
     try {
-      if (navigator.onLine) {
-        await axios.post("http://127.0.0.1:8000/transactions", transactionData);
-      } else {
-        const queue = JSON.parse(localStorage.getItem("offline_sales") || "[]");
-        queue.push(transactionData);
-        localStorage.setItem("offline_sales", JSON.stringify(queue));
+        if (navigator.onLine) {
+            await axios.post("http://127.0.0.1:8000/transactions", transactionData);
+        } else {
+            const queue = JSON.parse(localStorage.getItem("offline_sales") || "[]");
+            queue.push(transactionData);
+            localStorage.setItem("offline_sales", JSON.stringify(queue));
 
-        const cache = JSON.parse(
-          localStorage.getItem("inventory_cache") || "[]"
-        );
-        transactionData.items.forEach((sold) => {
-          const idx = cache.findIndex((i) => i.id === sold.id);
-          if (idx !== -1) cache[idx].stock_qty -= sold.qty;
-        });
-        localStorage.setItem("inventory_cache", JSON.stringify(cache));
-      }
+            const cache = JSON.parse(localStorage.getItem("inventory_cache") || "[]");
+            transactionData.items.forEach((sold) => {
+                const idx = cache.findIndex((i) => i.id === sold.id);
+                if (idx !== -1) cache[idx].stock_qty -= sold.qty;
+            });
+            localStorage.setItem("inventory_cache", JSON.stringify(cache));
+        }
 
-      setCart([]);
-      setShowModal(false);
-      setRefreshTrigger((prev) => prev + 1);
-      navigate("/dashboard/transaction");
+        setCart([]);
+        setShowModal(false);
+        setRefreshTrigger((prev) => prev + 1);
+        navigate("/dashboard/transaction");
     } catch (err) {
-      alert("Payment failed. Please try again.");
+        console.error("Payment failed:", err);
+        alert("Payment failed. Please check your backend connection.");
     }
-  };
+};
+
+  // const handleConfirmPayment = async (method, customerInfo) => {
+  //   const transactionId = `TXN-${Date.now()}`;
+  //   const transactionData = {
+  //     id: transactionId,
+  //     date: new Date().toISOString().split("T")[0],
+  //     amount: totalAmount,
+  //     method: method,
+  //     customer_name: customerInfo.name,
+  //   customer_phone: customerInfo.phone,
+  //     items: cart.map((item) => ({ id: item.id, qty: item.qty })),
+  //   };
+
+  //   try {
+  //     if (navigator.onLine) {
+  //       await axios.post("http://127.0.0.1:8000/transactions", transactionData);
+  //     } else {
+  //       const queue = JSON.parse(localStorage.getItem("offline_sales") || "[]");
+  //       queue.push(transactionData);
+  //       localStorage.setItem("offline_sales", JSON.stringify(queue));
+
+  //       const cache = JSON.parse(
+  //         localStorage.getItem("inventory_cache") || "[]"
+  //       );
+  //       transactionData.items.forEach((sold) => {
+  //         const idx = cache.findIndex((i) => i.id === sold.id);
+  //         if (idx !== -1) cache[idx].stock_qty -= sold.qty;
+  //       });
+  //       localStorage.setItem("inventory_cache", JSON.stringify(cache));
+  //     }
+
+  //     setCart([]);
+  //     setShowModal(false);
+  //     setRefreshTrigger((prev) => prev + 1);
+  //     navigate("/dashboard/transaction");
+  //   } catch (err) {
+  //     alert("Payment failed. Please try again.");
+  //   }
+  // };
 
   const totalAmount = cart.reduce((acc, i) => acc + i.price * i.qty, 0);
 
