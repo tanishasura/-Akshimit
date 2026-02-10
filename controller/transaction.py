@@ -22,7 +22,9 @@ def create_bulk_transaction(db: Session, data: dict):
             id=data.get('id'),
             date=data.get('date'),
             amount=data.get('amount'),
-            method=data.get('method')
+            method=data.get('method'),
+            customer_name=data.get('customer_name'),
+            customer_phone=data.get('customer_phone')
         )
         
         db.add(new_transaction)
@@ -37,3 +39,17 @@ def create_bulk_transaction(db: Session, data: dict):
         db.rollback()
         print(f"DATABASE ERROR: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal Server Error: Check terminal")
+        
+
+def process_refund(db: Session, txn_id: str, refund_data: dict):
+    txn = db.query(Transaction).filter(Transaction.id == txn_id).first()
+    
+    if not txn:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    
+    txn.status = "Refunded"
+    txn.refund_reason = refund_data.get("refund_reason")
+    
+    db.commit()
+    db.refresh(txn)
+    return txn

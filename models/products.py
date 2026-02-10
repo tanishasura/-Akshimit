@@ -25,8 +25,5 @@ class Product(Base):
    
     price = Column(Float, nullable=False)
     stock_qty = Column(Integer, default=0)
-
-
-
-
+    # gst = Column(Float, default=5.0)
 

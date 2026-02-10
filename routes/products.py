@@ -17,10 +17,12 @@ class ProductCreate(BaseModel):
     type: str
     price: float
     stock_qty: int
+    # gst: Optional[float] = 5.0
 
 class ProductUpdate(BaseModel):
     price: Optional[float] = None
     stock_qty: Optional[int] = None
+    # gst: Optional[float] = None
 
 @router.get('/products')
 def get_products(
