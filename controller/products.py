@@ -5,6 +5,8 @@ from sqlalchemy import or_
 
 def create_product(db: Session, product_data: dict):
     try:
+        if "gst" not in product_data:
+            product_data["gst"] = 5.0
         if "id" not in product_data or not product_data["id"]:
             from models.products import generate_product_id
             product_data["id"] = generate_product_id()
@@ -22,7 +24,7 @@ def create_product(db: Session, product_data: dict):
 
 
 def get_all_products(db: Session, search: str = None, size: str = None, color: str = None, 
-                     section: str = None, brand: str = None, sort: str = None):
+                     section: str = None, brand: str = None, sort: str = None, gst: float = None):
     query = db.query(Product)
     
     if search:
@@ -33,6 +35,8 @@ def get_all_products(db: Session, search: str = None, size: str = None, color: s
     if color and color != "all": query = query.filter(Product.color == color)
     if section and section != "all": query = query.filter(Product.section == section)
     if brand and brand != "all": query = query.filter(Product.brand == brand)
+    if gst is not None:
+        query = query.filter(Product.gst == gst)
 
     if sort == "lowToHigh":
         query = query.order_by(Product.price.asc())
