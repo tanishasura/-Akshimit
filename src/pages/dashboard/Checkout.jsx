@@ -13,6 +13,7 @@ import CheckoutFilter from "../../components/CheckoutFilter";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
+
 export default function Checkout() {
   const navigate = useNavigate();
   const quickAddInputRef = useRef(null);
@@ -32,6 +33,16 @@ export default function Checkout() {
   const [showModal, setShowModal] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+const [discount, setDiscount] = useState(0);
+
+  const calculateFinalTotal = () => {
+    const subtotal = cart.reduce((acc, i) => acc + i.price * i.qty, 0);
+    const gstTotal = cart.reduce((acc, i) => acc + (i.price * i.qty * ((i.gst || 5) / 100)), 0);
+    const beforeDiscount = subtotal + gstTotal;
+    return beforeDiscount - (beforeDiscount * (discount / 100));
+  };
+
+
 
   const syncOfflineTransactions = useCallback(async () => {
     const offlineQueue = JSON.parse(
@@ -108,6 +119,7 @@ export default function Checkout() {
     [items]
   );
 
+  
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
@@ -231,6 +243,7 @@ const handleConfirmPayment = async (method, customerInfo) => {
         }
 
         setCart([]);
+        setDiscount(0);
         setShowModal(false);
         setRefreshTrigger((prev) => prev + 1);
         navigate("/dashboard/transaction");
@@ -361,16 +374,27 @@ const handleConfirmPayment = async (method, customerInfo) => {
               }`}
               onChange={handleQuickAddChange}
             />
-            {quickAddError && (
+
+            {/* </div> */}
+            {/* {quickAddError && (
               <p className="text-red-500 text-xs mt-2 font-medium animate-pulse">
                 {quickAddError}
               </p>
-            )}
-          </div>
+            )} */}
 
+            <div className="flex-1 overflow-y-auto rounded-xl border border-slate-200 bg-white">
+            <div className="p-4 bg-yellow-50 border-b border-yellow-100 flex items-center justify-between">
+              <label className="text-sm font-bold text-yellow-800">Regular Customer?</label>
+              <input type="checkbox" checked={discount === 100} onChange={(e) => setDiscount(e.target.checked ? 100 : 0)} className="w-5 h-5 cursor-pointer accent-yellow-600" />
+            </div>
+            
+            <AddedItems cart={cart} updateQty={updateQty} discount={discount} />
+          </div>
+          </div>
+{/* 
           <div className="flex-1 overflow-y-auto rounded-xl border border-slate-100">
             <AddedItems cart={cart} updateQty={updateQty} />
-          </div>
+          </div> */}
 
           <CheckoutButton
             disabled={cart.length === 0}

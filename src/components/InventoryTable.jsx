@@ -26,7 +26,7 @@ export default function InventoryTable({ processedItems }) {
                 <th className="px-6 py-4">Name</th>
                 <th className="px-6 py-4 text-center">Size</th>
                 <th className="px-6 py-4 text-center">Price</th>
-                {/* <th className="px-6 py-4 text-center">GST (%)</th> */}
+                <th className="px-6 py-4 text-center">GST (%)</th>
                 <th className="px-6 py-4 text-center">Type</th>
                 <th className="px-6 py-4 text-center">Material</th>
                 <th className="px-6 py-4 text-center">Color</th>
@@ -52,9 +52,9 @@ export default function InventoryTable({ processedItems }) {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-center font-semibold">₹{item.price}</td>
-                  {/* <td className="px-6 py-4 text-center text-slate-500 font-mono">
+                  <td className="px-6 py-4 text-center text-slate-800 font-semibold">
   {item.gst || 5}% 
-</td> */}
+</td>
                   <td className="px-6 py-4 text-center text-slate-800">{item.type}</td>
                   <td className="px-6 py-4 text-center text-slate-800">{item.material}</td>
                   <td className="px-6 py-4 text-center text-slate-800">{item.color}</td>
