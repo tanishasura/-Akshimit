@@ -6,15 +6,13 @@ export default function InventoryTable({ processedItems }) {
   const session = JSON.parse(localStorage.getItem("user_session"));
   const isAdmin = session?.role === "admin";
 
-  const inStockItems = processedItems.filter(item => item.stock_qty > 0);
-
   return (
     <div>
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
           <div className="font-bold text-2xl text-slate-700">All Product Details</div>
           <div className="text-sm text-slate-500 font-medium">
-          Showing {inStockItems.length} products
+            Showing {processedItems.length} products
           </div>
         </div>
 
@@ -36,7 +34,7 @@ export default function InventoryTable({ processedItems }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-           {inStockItems.map((item) => (
+              {processedItems.map((item) => (
                 <tr
                   key={item.id}
                   className={`border-b border-slate-50 last:border-none transition-colors ${
@@ -53,8 +51,8 @@ export default function InventoryTable({ processedItems }) {
                   </td>
                   <td className="px-6 py-4 text-center font-semibold">₹{item.price}</td>
                   <td className="px-6 py-4 text-center text-slate-800 font-semibold">
-  {item.gst || 5}% 
-</td>
+                    {item.gst || 5}% 
+                  </td>
                   <td className="px-6 py-4 text-center text-slate-800">{item.type}</td>
                   <td className="px-6 py-4 text-center text-slate-800">{item.material}</td>
                   <td className="px-6 py-4 text-center text-slate-800">{item.color}</td>

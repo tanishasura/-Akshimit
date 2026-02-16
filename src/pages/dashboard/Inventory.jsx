@@ -39,13 +39,31 @@ export default function Inventory() {
           brand: filters.brand === "all" ? null : filters.brand
         }
       });
-      setItems(response.data); 
+
+
+      const cachedData = JSON.parse(localStorage.getItem("inventory_cache") || "[]");
+      
+      const updatedItems = response.data.map(serverItem => {
+        const cachedItem = cachedData.find(c => c.id === serverItem.id);
+        return cachedItem ? { ...serverItem, stock_qty: cachedItem.stock_qty } : serverItem;
+      });
+
+      setItems(updatedItems);
     } catch (error) {
       console.error("Error fetching inventory:", error);
     } finally {
       setLoading(false);
     }
   }, [searchTerm, filters]);
+
+
+  //     setItems(response.data); 
+  //   } catch (error) {
+  //     console.error("Error fetching inventory:", error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, [searchTerm, filters]);
 
   useEffect(() => {
     const delay = setTimeout(fetchProducts, 300);

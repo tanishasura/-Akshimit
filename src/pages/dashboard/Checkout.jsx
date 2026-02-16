@@ -13,7 +13,6 @@ import CheckoutFilter from "../../components/CheckoutFilter";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-
 export default function Checkout() {
   const navigate = useNavigate();
   const quickAddInputRef = useRef(null);
@@ -25,7 +24,16 @@ export default function Checkout() {
     section: "all",
   });
 
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(() => {
+    const savedCart = localStorage.getItem("pending_cart");
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
+
+  const [discount, setDiscount] = useState(() => {
+    const savedDiscount = localStorage.getItem("pending_discount");
+    return savedDiscount ? JSON.parse(savedDiscount) : 0;
+  });
+
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [quickAddId, setQuickAddId] = useState("");
@@ -33,7 +41,14 @@ export default function Checkout() {
   const [showModal, setShowModal] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-const [discount, setDiscount] = useState(0);
+
+  useEffect(() => {
+    localStorage.setItem("pending_cart", JSON.stringify(cart));
+  }, [cart]);
+
+  useEffect(() => {
+    localStorage.setItem("pending_discount", JSON.stringify(discount));
+  }, [discount]);
 
   const calculateFinalTotal = () => {
     const subtotal = cart.reduce((acc, i) => acc + i.price * i.qty, 0);
@@ -41,8 +56,6 @@ const [discount, setDiscount] = useState(0);
     const beforeDiscount = subtotal + gstTotal;
     return beforeDiscount - (beforeDiscount * (discount / 100));
   };
-
-
 
   const syncOfflineTransactions = useCallback(async () => {
     const offlineQueue = JSON.parse(
@@ -119,7 +132,6 @@ const [discount, setDiscount] = useState(0);
     [items]
   );
 
-  
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
@@ -133,8 +145,14 @@ const [discount, setDiscount] = useState(0);
             section: filters.section === "all" ? null : filters.section,
           },
         });
-        setItems(response.data);
-        localStorage.setItem("inventory_cache", JSON.stringify(response.data));
+        
+        const syncedItems = response.data.map(item => {
+          const inCart = cart.find(c => c.id === item.id);
+          return inCart ? { ...item, stock_qty: item.stock_qty - inCart.qty } : item;
+        });
+
+        setItems(syncedItems);
+        localStorage.setItem("inventory_cache", JSON.stringify(syncedItems));
       } else {
         const cached = JSON.parse(
           localStorage.getItem("inventory_cache") || "[]"
@@ -154,7 +172,7 @@ const [discount, setDiscount] = useState(0);
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, filters]);
+  }, [searchTerm, filters, cart]); 
 
   useEffect(() => {
     const delay = setTimeout(fetchProducts, 300);
@@ -162,18 +180,20 @@ const [discount, setDiscount] = useState(0);
   }, [fetchProducts, refreshTrigger]);
 
   const handleItemClick = (item) => {
+    const targetItem = items.find(i => i.id === item.id);
+    if (!targetItem || targetItem.stock_qty < 1) {
+        alert("Out of stock!");
+        return;
+    }
+
+    setItems(prevItems => 
+        prevItems.map(i => i.id === item.id ? { ...i, stock_qty: i.stock_qty - 1 } : i)
+    );
+
     setCart((prev) => {
       const existing = prev.find((c) => c.id === item.id);
       if (!existing) {
-        if (item.stock_qty < 1) {
-          alert("Out of stock!");
-          return prev;
-        }
         return [...prev, { ...item, qty: 1 }];
-      }
-      if (existing.qty >= item.stock_qty) {
-        alert(`Cannot add more. Only ${item.stock_qty} available.`);
-        return prev;
       }
       return prev.map((c) => (c.id === item.id ? { ...c, qty: c.qty + 1 } : c));
     });
@@ -196,16 +216,23 @@ const [discount, setDiscount] = useState(0);
   };
 
   const updateQty = (id, delta) => {
+    if (delta > 0) {
+        const itemInStock = items.find(i => i.id === id);
+        if (!itemInStock || itemInStock.stock_qty < 1) {
+            alert("Maximum stock reached");
+            return;
+        }
+    }
+
+    setItems(prevItems => 
+        prevItems.map(i => i.id === id ? { ...i, stock_qty: i.stock_qty - delta } : i)
+    );
+
     setCart((prev) =>
       prev
         .map((item) => {
           if (item.id === id) {
-            const newQty = item.qty + delta;
-            if (delta > 0 && newQty > item.stock_qty) {
-              alert("Maximum stock reached");
-              return item;
-            }
-            return { ...item, qty: Math.max(0, newQty) };
+            return { ...item, qty: item.qty + delta };
           }
           return item;
         })
@@ -213,13 +240,13 @@ const [discount, setDiscount] = useState(0);
     );
   };
 
-const handleConfirmPayment = async (method, customerInfo) => {
-  if (!customerInfo) return;
+  const handleConfirmPayment = async (method, customerInfo) => {
+    if (!customerInfo) return;
     const transactionId = `TXN-${Date.now()}`;
     const transactionData = {
         id: transactionId,
-        date: new Date().toISOString(), 
-        amount: totalAmount,
+        date: new Date().toISOString(),
+        amount: calculateFinalTotal(), 
         method: method,
         customer_name: customerInfo.name,
         customer_phone: customerInfo.phone,
@@ -244,6 +271,9 @@ const handleConfirmPayment = async (method, customerInfo) => {
 
         setCart([]);
         setDiscount(0);
+        localStorage.removeItem("pending_cart");
+        localStorage.removeItem("pending_discount");
+
         setShowModal(false);
         setRefreshTrigger((prev) => prev + 1);
         navigate("/dashboard/transaction");
@@ -251,48 +281,7 @@ const handleConfirmPayment = async (method, customerInfo) => {
         console.error("Payment failed:", err);
         alert("Payment failed. Please check your backend connection.");
     }
-};
-
-  // const handleConfirmPayment = async (method, customerInfo) => {
-  //   const transactionId = `TXN-${Date.now()}`;
-  //   const transactionData = {
-  //     id: transactionId,
-  //     date: new Date().toISOString().split("T")[0],
-  //     amount: totalAmount,
-  //     method: method,
-  //     customer_name: customerInfo.name,
-  //   customer_phone: customerInfo.phone,
-  //     items: cart.map((item) => ({ id: item.id, qty: item.qty })),
-  //   };
-
-  //   try {
-  //     if (navigator.onLine) {
-  //       await axios.post("http://127.0.0.1:8000/transactions", transactionData);
-  //     } else {
-  //       const queue = JSON.parse(localStorage.getItem("offline_sales") || "[]");
-  //       queue.push(transactionData);
-  //       localStorage.setItem("offline_sales", JSON.stringify(queue));
-
-  //       const cache = JSON.parse(
-  //         localStorage.getItem("inventory_cache") || "[]"
-  //       );
-  //       transactionData.items.forEach((sold) => {
-  //         const idx = cache.findIndex((i) => i.id === sold.id);
-  //         if (idx !== -1) cache[idx].stock_qty -= sold.qty;
-  //       });
-  //       localStorage.setItem("inventory_cache", JSON.stringify(cache));
-  //     }
-
-  //     setCart([]);
-  //     setShowModal(false);
-  //     setRefreshTrigger((prev) => prev + 1);
-  //     navigate("/dashboard/transaction");
-  //   } catch (err) {
-  //     alert("Payment failed. Please try again.");
-  //   }
-  // };
-
-  const totalAmount = cart.reduce((acc, i) => acc + i.price * i.qty, 0);
+  };
 
   return (
     <div className="p-6">
@@ -330,7 +319,7 @@ const handleConfirmPayment = async (method, customerInfo) => {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {items
-                  .filter((item) => item.stock_qty > 0)
+                  .filter((item) => item.stock_qty >= 0) 
                   .map((item) => (
                     <tr
                       key={item.id}
@@ -374,27 +363,26 @@ const handleConfirmPayment = async (method, customerInfo) => {
               }`}
               onChange={handleQuickAddChange}
             />
-
-            {/* </div> */}
-            {/* {quickAddError && (
+            {quickAddError && (
               <p className="text-red-500 text-xs mt-2 font-medium animate-pulse">
                 {quickAddError}
               </p>
-            )} */}
+            )}
+          </div>
 
-            <div className="flex-1 overflow-y-auto rounded-xl border border-slate-200 bg-white">
-            <div className="p-4 bg-yellow-50 border-b border-yellow-100 flex items-center justify-between">
-              <label className="text-sm font-bold text-yellow-800">Regular Customer?</label>
-              <input type="checkbox" checked={discount === 100} onChange={(e) => setDiscount(e.target.checked ? 100 : 0)} className="w-5 h-5 cursor-pointer accent-yellow-600" />
-            </div>
-            
+          <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200 shadow-sm flex items-center justify-between">
+            <label className="text-sm font-bold text-yellow-800">Regular Customer?</label>
+            <input 
+              type="checkbox" 
+              checked={discount === 100} 
+              onChange={(e) => setDiscount(e.target.checked ? 100 : 0)} 
+              className="w-5 h-5 cursor-pointer accent-yellow-600" 
+            />
+          </div>
+
+          <div className="flex-1 overflow-y-auto rounded-xl border border-slate-100">
             <AddedItems cart={cart} updateQty={updateQty} discount={discount} />
           </div>
-          </div>
-{/* 
-          <div className="flex-1 overflow-y-auto rounded-xl border border-slate-100">
-            <AddedItems cart={cart} updateQty={updateQty} />
-          </div> */}
 
           <CheckoutButton
             disabled={cart.length === 0}
@@ -405,7 +393,7 @@ const handleConfirmPayment = async (method, customerInfo) => {
 
       <PaymentModal
         isOpen={showModal}
-        total={totalAmount}
+        total={calculateFinalTotal()}
         onClose={() => setShowModal(false)}
         onConfirm={handleConfirmPayment}
       />
