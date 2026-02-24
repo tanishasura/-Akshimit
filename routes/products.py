@@ -17,10 +17,14 @@ class ProductCreate(BaseModel):
     type: str
     price: float
     stock_qty: int
+    gst: Optional[float] = 5.0
+    
 
 class ProductUpdate(BaseModel):
     price: Optional[float] = None
     stock_qty: Optional[int] = None
+    gst: Optional[float] = None
+    
 
 @router.get('/products')
 def get_products(
@@ -30,6 +34,7 @@ def get_products(
     section: Optional[str] = None,
     brand: Optional[str] = None,
     sort: Optional[str] = None,
+    gst: Optional[float] = None,
     db: Session = Depends(get_db)
 ):
     return get_all_products(
@@ -39,7 +44,8 @@ def get_products(
         color=color, 
         section=section, 
         brand=brand,
-        sort=sort
+        sort=sort,
+        gst=gst
     )
 
 @router.get('/products/{identifier}')
