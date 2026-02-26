@@ -23,7 +23,7 @@ onConfirm(method, info);
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl">
         <h2 className="text-2xl font-bold text-slate-800 mb-2">Complete Payment</h2>
-        <p className="text-slate-500 mb-6">Total: <span className="text-blue-600 font-bold">₹{total}</span></p>
+        <p className="text-slate-500 mb-6">Total: <span className="text-blue-600 font-bold">₹{total.toFixed(2)}</span></p>
         
 {/* <div className="space-y-3 mb-6">
           <input 
@@ -84,7 +84,7 @@ onConfirm(method, info);
         </div>
         
         {!loading && (
-          <button onClick={onClose} className="w-full mt-6 text-slate-400 text-sm">
+          <button onClick={onClose} className="w-full mt-6 text-black-400 text-md font-medium rounded-lg p-3 bg-red-500 hover:bg-red-700">
             Cancel
           </button>
         )}

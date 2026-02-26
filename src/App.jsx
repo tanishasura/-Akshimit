@@ -9,6 +9,7 @@ import AddProduct from "./pages/AddProduct";
 import Transaction from "./pages/dashboard/Transaction";
 import Update from "./pages/dashboard/Update";
 import Logout from "./pages/Logout";
+import RefundDetail from "./pages/dashboard/RefundDetails";
 
 const ProtectedRoute = ({children, allowAdminOnly = false}) => {
     const session = JSON.parse(localStorage.getItem("user_session"));
@@ -63,6 +64,12 @@ export default function App() {
               <Transaction/>
             </ProtectedRoute>
           }/>
+
+          <Route path="refund-details/:id" element={
+  <ProtectedRoute allowAdminOnly={true}>
+    <RefundDetail />
+  </ProtectedRoute>
+}/>
 
           <Route path="inventory/addProduct" element={
             <ProtectedRoute allowAdminOnly={true}>

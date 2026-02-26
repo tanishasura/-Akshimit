@@ -1,20 +1,24 @@
 import React from 'react';
 
-export default function AddedItems({ cart, updateQty, discount = 0 }) {
+export default function AddedItems({ cart, updateQty, discountValue = 0, discountType = "percent" }) {
   // Calculate total 
   // const grandTotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
   const subtotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
 
-  //  GST
+ 
+ const discountAmt = discountType === "percent" 
+    ? subtotal * (parseFloat(discountValue || 0) / 100)
+    : parseFloat(discountValue || 0);
+
+  //  GST 
   const totalGst = cart.reduce((acc, item) => {
-    const itemGst = (item.price * item.qty) * ((item.gst || 5) / 100);
-    return acc + itemGst;
+    const itemSubtotal = item.price * item.qty;
+    const itemShare = subtotal > 0 ? (itemSubtotal / subtotal) * discountAmt : 0;
+    const itemTaxable = Math.max(0, itemSubtotal - itemShare);
+    return acc + (itemTaxable * ((item.gst || 5) / 100));
   }, 0);
 
-  // Final Calculations
-  const totalBeforeDiscount = subtotal + totalGst;
-  const discountAmount = (totalBeforeDiscount * (discount / 100));
-  const grandTotal = totalBeforeDiscount - discountAmount;
+  const grandTotal = Math.max(0, subtotal - discountAmt) + totalGst;
 
   
 
@@ -69,26 +73,29 @@ export default function AddedItems({ cart, updateQty, discount = 0 }) {
 
 
       <div className="border-t pt-4 space-y-2">
-        <div className="flex justify-between text-sm text-slate-600">
+      <div className="flex justify-between text-sm text-slate-600">
           <span>Subtotal</span>
           <span>₹{subtotal.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between text-sm text-slate-600">
-          <span>Total GST</span>
-          <span className="text-slate-800 font-medium">+ ₹{totalGst.toFixed(2)}</span>
-        </div>
-        
-        {discount > 0 && (
+
+        {discountAmt > 0 && (
           <div className="flex justify-between text-sm text-green-600 font-bold bg-green-50 p-1 rounded">
-            <span>Discount ({discount}%)</span>
-            <span>- ₹{discountAmount.toFixed(2)}</span>
+            <span>Discount {discountType === "percent" ? `(${discountValue}%)` : ""}</span>
+            <span>- ₹{discountAmt.toFixed(2)}</span>
           </div>
         )}
+
+        <div className="flex justify-between text-sm text-slate-600">
+          <span>Total GST </span>
+          <span className="text-slate-800 font-medium">+ ₹{totalGst.toFixed(2)}</span>
+        </div>
+
 
         <div className="flex justify-between items-center pt-2 border-t mt-2">
           <span className="text-slate-800 font-bold">Grand Total</span>
           <span className="text-2xl font-black text-blue-600">₹{grandTotal.toFixed(2)}</span>
         </div>
+       
       </div>
     </div>
   );
