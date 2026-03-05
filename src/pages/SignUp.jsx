@@ -42,7 +42,7 @@ const handleSubmit = (e) => {
   e.preventDefault();
   if (validate()) {
     const existingUsers = JSON.parse(localStorage.getItem("registered_users")) || [];
-    const ADMIN_EMAIL = "admin@akshmit.com";
+    const ADMIN_EMAIL = "admin@Classifabs.com";
 
     if (existingUsers.find(u => u.email === email)) {
       setErrors({ email: "Email already registered. Please Sign In." });
@@ -72,7 +72,7 @@ const handleSubmit = (e) => {
         <div className="text-center mb-6">
           <div className="flex justify-center items-center gap-2 mb-2">
             <div className="w-8 h-8 rounded-full bg-blue-600"></div>
-            <h1 className="text-2xl font-semibold">Akshmit</h1>
+            <h1 className="text-2xl font-semibold">Classifabs</h1>
           </div>
         </div>
 

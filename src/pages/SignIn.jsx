@@ -73,7 +73,7 @@ const handleSubmit = (e) => {
         <div className="text-center mb-6">
           <div className="flex justify-center items-center gap-2 mb-2">
             <div className="w-8 h-8 rounded-full bg-blue-600"></div>
-            <h1 className="text-2xl font-semibold">Akshmit</h1>
+            <h1 className="text-2xl font-semibold">Classifabs</h1>
           </div>
         </div>
 
@@ -139,12 +139,29 @@ const handleSubmit = (e) => {
             </div>
           </div> */}
 
-          <button className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
-            Sign In
-          </button>
+          <div className="flex flex-col gap-3">
+            <button className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+              Sign In
+            </button>
+            
+            {/* Added by request: Button to remove existing accounts
+            <button 
+              type="button"
+              onClick={() => {
+                // Clear user accounts and sessions from LocalStorage
+                localStorage.removeItem("registered_users");
+                localStorage.removeItem("user_session");
+                alert("All existing user accounts have been removed.");
+              }}
+              className="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600"
+            >
+              Remove All User Accounts
+            </button> */}
+
+          </div>
 
           {/* <p className="text-md mt-4">
-            New to Akshmit?{" "} */}
+            New to Classifabs?{" "} */}
             <div className="mt-4">
                   <Link to="/signUp" className="text-blue-600">
                        Create an account

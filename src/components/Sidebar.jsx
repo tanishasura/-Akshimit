@@ -23,7 +23,7 @@ export default function Sidebar({ isCollapsed }) {
         {/* Header */}
         <div className="p-6 h-20 flex items-center border-b border-slate-700">
           <span className="text-2xl font-bold truncate">
-            {isCollapsed ? "A" : "Akshmit"}
+            {isCollapsed ? "C" : "Classifabs"}
           </span>
         </div>
 
