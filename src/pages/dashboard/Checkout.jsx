@@ -115,14 +115,55 @@ export default function Checkout() {
 
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
-      if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA" || showModal) return;
-      if (e.key.length === 1) {
+      // Ignore if user is already typing in an input/textarea or modal is open
+      if (
+        document.activeElement.tagName === "INPUT" || 
+        document.activeElement.tagName === "TEXTAREA" || 
+        showModal
+      ) return;
+      
+      // If a valid character key is pressed (typical of QR scanner starting)
+      if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        // Prevent the default typing behavior so it doesn't get typed natively into the input 
+        // immediately *after* we programmatically set it and focus it.
+        e.preventDefault();
+        
         quickAddInputRef.current?.focus();
-        setQuickAddId((prev) => (prev + e.key).toUpperCase().slice(0, 8));
+        setQuickAddId((prev) => {
+            // If the user hasn't typed anything recently, or scanning a new item, just start with this key
+            const newId = (prev + e.key).toUpperCase().slice(0, 8);
+            return newId;
+        });
       }
     };
+    
+    const handleGlobalPaste = (e) => {
+      // Ignore if user is already typing in an input/textarea or modal is open
+      if (
+        document.activeElement.tagName === "INPUT" || 
+        document.activeElement.tagName === "TEXTAREA" || 
+        showModal
+      ) return;
+
+      const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+      if (pastedText) {
+        e.preventDefault(); // Stop default pasting behavior
+        quickAddInputRef.current?.focus();
+        
+        // Take up to 8 uppercase characters exactly like typing does
+        setQuickAddId((prev) => {
+            const combined = prev + pastedText;
+            return combined.toUpperCase().slice(0, 8);
+        });
+      }
+    };
+
     window.addEventListener("keydown", handleGlobalKeyDown);
-    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+    window.addEventListener("paste", handleGlobalPaste);
+    return () => {
+      window.removeEventListener("keydown", handleGlobalKeyDown);
+      window.removeEventListener("paste", handleGlobalPaste);
+    };
   }, [showModal]);
 
   const brands = useMemo(() => [...new Set(items.map((i) => i.brand))].filter(Boolean), [items]);
@@ -195,14 +236,40 @@ const freshItems = response.data.map(serverItem => {
     });
   };
 
-  const handleQuickAddChange = async (e) => {
+  const handleQuickAddChange = (e) => {
     const value = e.target.value.toUpperCase();
     setQuickAddId(value);
     setQuickAddError("");
-    if (value.length === 8) {
-      const foundItem = items.find((i) => i.id === value);
-      if (foundItem) { handleItemClick(foundItem); setQuickAddId(""); }
-      else { setQuickAddError("Invalid Id"); }
+  };
+
+  // Watch for quickAddId reaching 8 characters to automatically submit (applies to scanning, typing, and pasting!)
+  useEffect(() => {
+    if (quickAddId.length === 8) {
+      const foundItem = items.find((i) => i.id === quickAddId);
+      if (foundItem) { 
+        handleItemClick(foundItem); 
+        setQuickAddId(""); 
+      } else { 
+        setQuickAddError("Invalid Id"); 
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quickAddId, items]);
+
+  const clearCart = () => {
+    if (cart.length === 0) return;
+    if (window.confirm("Are you sure you want to remove all items from the cart?")) {
+      setItems(prevItems => {
+        let updatedItems = [...prevItems];
+        cart.forEach(cartItem => {
+          const idx = updatedItems.findIndex(i => i.id === cartItem.id);
+          if (idx !== -1) {
+            updatedItems[idx] = { ...updatedItems[idx], stock_qty: updatedItems[idx].stock_qty + cartItem.qty };
+          }
+        });
+        return updatedItems;
+      });
+      setCart([]);
     }
   };
 
@@ -267,19 +334,34 @@ const freshItems = response.data.map(serverItem => {
             <table className="w-full text-left">
               <thead className="sticky top-0 bg-white shadow-sm">
                 <tr className="bg-slate-50 text-slate-500 uppercase text-md font-medium">
-                  <th className="px-6 py-4">ID</th>
-                  <th className="px-6 py-4">Name</th>
-                  <th className="px-6 py-4 text-center">Stock</th>
-                  <th className="px-6 py-4 text-center">Price</th>
+                  <th className="px-6 py-4 w-px whitespace-nowrap">ID</th>
+                  <th className="px-6 py-4 w-full">Name</th>
+                  <th className="px-6 py-4 w-px whitespace-nowrap">Size & Color</th>
+                  <th className="px-6 py-4 text-center w-px whitespace-nowrap">Stock</th>
+                  <th className="px-6 py-4 text-center w-px whitespace-nowrap">Price</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {items.filter((item) => item.stock_qty >= 0).map((item) => (
                   <tr key={item.id} onClick={() => handleItemClick(item)} className="hover:bg-blue-50 cursor-pointer text-sm">
-                    <td className="px-6 py-4 font-semibold">{item.id}</td>
+                    <td className="px-6 py-4 font-semibold w-px whitespace-nowrap">{item.id}</td>
                     <td className="px-6 py-4">{item.name}</td>
-                    <td className="px-6 py-4 text-center"><span className={`px-3 py-1 rounded-full ${item.stock_qty > 10 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{item.stock_qty}</span></td>
-                    <td className="px-6 py-4 text-center">₹{item.price}</td>
+                    <td className="px-6 py-4 w-px whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        {item.color && item.color.toLowerCase() !== 'all' && item.color.toLowerCase() !== 'n/a' ? (
+                          <div 
+                            className="w-4 h-4 rounded-sm border border-slate-300 shadow-sm"
+                            style={{ backgroundColor: item.color.toLowerCase() }}
+                            title={item.color}
+                          />
+                        ) : null}
+                        <span className="text-slate-600 font-medium">
+                          {item.size && item.size.toLowerCase() !== 'all' && item.size.toLowerCase() !== 'n/a' ? item.size : "-"}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-center w-px whitespace-nowrap"><span className={`px-3 py-1 rounded-full ${item.stock_qty > 10 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{item.stock_qty}</span></td>
+                    <td className="px-6 py-4 text-center w-px whitespace-nowrap">₹{item.price}</td>
                   </tr>
                 ))}
               </tbody>
@@ -328,6 +410,7 @@ const freshItems = response.data.map(serverItem => {
             <AddedItems 
                 cart={cart} 
                 updateQty={updateQty} 
+                clearCart={clearCart}
                 discountValue={discountValue} 
                 discountType={discountType} 
             />
