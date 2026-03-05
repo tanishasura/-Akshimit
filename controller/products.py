@@ -72,6 +72,16 @@ def delete_product(db: Session, product_id: str):
     db.commit()
     return {"message": f"Product {product_id} deleted successfully"}
 
+def restock_product(db: Session, product_id: str, quantity: int):
+    db_product = db.query(Product).filter(Product.id == product_id).first()
+    if not db_product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    db_product.stock_qty += quantity
+    db.commit()
+    db.refresh(db_product)
+    return db_product
+
 def get_product_by_id(db: Session, identifier: str):
     db_product = db.query(Product).filter(
         or_(

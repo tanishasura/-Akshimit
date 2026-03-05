@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from config.db import get_db
-from controller.transaction import create_bulk_transaction, get_all_transactions, process_refund
+from controller.transaction import create_bulk_transaction, get_all_transactions, process_refund, process_item_refund
 from pydantic import BaseModel
 from typing import List
 
@@ -35,3 +35,7 @@ def create_transaction_api(transaction: TransactionCreate, db: Session = Depends
 @router.put('/transactions/{txn_id}')
 def refund_transaction_api(txn_id: str, data: dict, db: Session = Depends(get_db)):
     return process_refund(db, txn_id, data)
+
+@router.put('/transactions/{txn_id}/items/{item_id}/refund')
+def refund_transaction_item_api(txn_id: str, item_id: int, data: dict, db: Session = Depends(get_db)):
+    return process_item_refund(db, txn_id, item_id, data)

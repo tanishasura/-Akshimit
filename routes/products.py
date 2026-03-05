@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from config.db import get_db
-from controller.products import create_product, get_all_products, get_product_by_id, update_product, delete_product
+from controller.products import create_product, get_all_products, get_product_by_id, update_product, delete_product, restock_product
 from pydantic import BaseModel
 from typing import Optional
 
@@ -63,3 +63,8 @@ def update_product_api(product_id: str, product: ProductUpdate, db: Session = De
 @router.delete('/products/{product_id}')
 def delete_product_api(product_id: str, db: Session = Depends(get_db)):
     return delete_product(db, product_id)
+
+@router.patch('/products/{product_id}/restock')
+def restock_product_api(product_id: str, data: dict, db: Session = Depends(get_db)):
+    quantity = data.get("quantity", 0)
+    return restock_product(db, product_id, quantity)
