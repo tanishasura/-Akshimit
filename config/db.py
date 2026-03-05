@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # Cloud PostgreSQL (Commented out for local offline use)
-# DATABASE_URL = "postgresql://akshmit_db_v2_user:ziVMah5SYv9RUasyaubYOUYfcKlweM8R@dpg-d64vlma4d50c73eqm9s0-a.virginia-postgres.render.com/akshmit_db_v2?sslmode=require"
+# DATABASE_URL = "postgresql://classifabs_db_v2_user:ziVMah5SYv9RUasyaubYOUYfcKlweM8R@dpg-d64vlma4d50c73eqm9s0-a.virginia-postgres.render.com/classifabs_db_v2?sslmode=require"
 
 # Local SQLite
 DATABASE_URL = "sqlite:///./local_billing.db"
