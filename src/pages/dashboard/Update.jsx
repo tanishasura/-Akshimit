@@ -11,6 +11,7 @@ export default function Update() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
 const [isDownloading, setIsDownloading] = useState(false);
+  const [qrSize, setQrSize] = useState("2x2");
 
   const session = JSON.parse(localStorage.getItem("user_session"));
   const isAdmin = session?.role === "admin";
@@ -69,10 +70,11 @@ const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownloadSingleQR = async () => {
     setIsDownloading(true);
+    const [w, h] = qrSize.split("x").map(Number);
     const doc = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: [80, 80], 
+      orientation: w > h ? "landscape" : "portrait",
+      unit: "in",
+      format: [w, h], 
     });
 
     const getBase64Image = (url) => {
@@ -96,11 +98,50 @@ const [isDownloading, setIsDownloading] = useState(false);
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${product.id}`;
       const base64 = await getBase64Image(qrUrl);
       
-      doc.addImage(base64, "PNG", 15, 5, 50, 50); 
-      doc.setFontSize(12);
-      doc.text(`ID: ${product.id}`, 40, 62, { align: "center" });
+      // Side-by-side layout: QR on left, details on right
+      const qrWidth = w * 0.50; // 50% for QR code area (used to be 45%)
+      const detailsX = w * 0.50; // Text starts right at 50% boundary (used to be 55%)
+      
+      // Calculate QR dimensions to fit in left half
+      let qrDim = h - 0.4;
+      if (qrDim > qrWidth - 0.2) qrDim = qrWidth - 0.2;
+      if (qrDim < 0.3) qrDim = 0.3;
+      
+      // Center QR vertically in its half
+      const qrX = (qrWidth - qrDim) / 2;
+      const qrY = (h - qrDim) / 2;
+      
+      // Add QR code
+      doc.addImage(base64, "PNG", qrX, qrY, qrDim, qrDim);
+      
+      // Add details on the right side
+      // Calculate total height of text block to center vertically
+      const lineHeight = 0.16;
+      const totalTextHeight = 0.18 + lineHeight * 2 + 0.18; // ID(0.18) + Name(0.16) + Size(0.16) + Unit Price(0.18) + Price amount(last line doesn't add to start pos offset)
+      let detailsY = (h - totalTextHeight) / 2; // Subtract total height from container height and divide by 2 for center point
+      
+      const detailsXOffset = 0.05; // Give it a tiny bit of left margin from center divider
+      
       doc.setFontSize(10);
-      doc.text(product.name, 40, 68, { align: "center" });
+      doc.setFont("helvetica", "bold");
+      doc.text(`${product.id}`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
+      detailsY += 0.18;
+      
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      const displayName = product.name.length > 25 ? product.name.substring(0, 23) + "..." : product.name;
+      doc.text(displayName, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
+      detailsY += 0.16;
+      
+      doc.text(`Size: ${product.size || "N/A"}`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
+      detailsY += 0.16;
+      
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      const formattedPrice = parseFloat(product.price).toFixed(2);
+      doc.text(`Unit Price:`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
+      detailsY += 0.18;
+      doc.text(`Rs. ${formattedPrice}`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
       
       doc.save(`QR_${product.id}.pdf`);
     } catch (err) {
@@ -116,16 +157,27 @@ const [isDownloading, setIsDownloading] = useState(false);
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
         <div className="flex justify-between items-start mb-6">
         <h2 className="text-2xl font-bold mb-6 text-slate-800">Update {product.name}</h2>
-
-        <button 
-            type="button"
-            onClick={handleDownloadSingleQR}
-            disabled={isDownloading}
-            className="flex items-center gap-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg transition-colors font-semibold"
+        
+        <div className="flex items-center gap-2">
+          <select 
+            value={qrSize} 
+            onChange={(e) => setQrSize(e.target.value)}
+            className="bg-slate-100 border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none"
           >
-            <MdQrCodeScanner className="text-blue-600 text-lg" />
-            {isDownloading ? "Generating..." : "Download QR"}
-          </button>
+            <option value="2x1">2 x 1 inch</option>
+            <option value="2x2">2 x 2 inch</option>
+            <option value="3x2">3 x 2 inch</option>
+          </select>
+          <button 
+              type="button"
+              onClick={handleDownloadSingleQR}
+              disabled={isDownloading}
+              className="flex items-center gap-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg transition-colors font-semibold"
+            >
+              <MdQrCodeScanner className="text-blue-600 text-lg" />
+              {isDownloading ? "Generating..." : "Download QR"}
+            </button>
+        </div>
 
           </div>
 

@@ -19,6 +19,7 @@ export default function Inventory() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortType, setSortType] = useState("default");
   const [isDownloading, setIsDownloading] = useState(false);
+  const [qrSize, setQrSize] = useState("2x2");
 
   const [filters, setFilters] = useState({
     section: "all",
@@ -206,10 +207,11 @@ export default function Inventory() {
 
 
 const handleDownloadAllQR = async () => {
+  const [w, h] = qrSize.split("x").map(Number);
   const doc = new jsPDF({
-    orientation: "portrait",
-    unit: "mm",
-    format: [30, 30], 
+    orientation: w > h ? "landscape" : "portrait",
+    unit: "in",
+    format: [w, h], 
   });
 
   const getBase64Image = (url) => {
@@ -236,23 +238,52 @@ const handleDownloadAllQR = async () => {
     try {
       const base64 = await getBase64Image(qrUrl);
       
-      if (i > 0) doc.addPage([30, 30], "portrait");
+      if (i > 0) doc.addPage([w, h], w > h ? "landscape" : "portrait");
 
-      const pageWidth = 30;
-      const qrSize = 10;
-      const xPos = (pageWidth - qrSize) / 2; 
-      const yPos = 1;
-
-      doc.addImage(base64, "PNG", xPos, yPos, qrSize, qrSize); 
-
-      doc.setFontSize(8);
+      // Side-by-side layout: QR on left, details on right
+      const qrWidth = w * 0.50; // 50% for QR code area (used to be 45%)
+      const detailsX = w * 0.50; // Text starts right at 50% boundary (used to be 55%)
+      
+      // Calculate QR dimensions to fit in left half
+      let qrDim = h - 0.4;
+      if (qrDim > qrWidth - 0.2) qrDim = qrWidth - 0.2;
+      if (qrDim < 0.3) qrDim = 0.3;
+      
+      // Center QR vertically in its half
+      const qrX = (qrWidth - qrDim) / 2;
+      const qrY = (h - qrDim) / 2;
+      
+      // Add QR code
+      doc.addImage(base64, "PNG", qrX, qrY, qrDim, qrDim);
+      
+      // Add details on the right side
+      // Calculate total height of text block to center vertically
+      const lineHeight = 0.16;
+      const totalTextHeight = 0.18 + lineHeight * 2 + 0.18; // ID + Name + Size + Unit Price gap
+      let detailsY = (h - totalTextHeight) / 2;
+      
+      const detailsXOffset = 0.05;
+      
+      doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
-      doc.text(`ID: ${item.id}`, pageWidth / 2, yPos + qrSize + 3, { align: "center" });
-
-      doc.setFontSize(6);
+      doc.text(`${item.id}`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
+      detailsY += 0.18;
+      
+      doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
-      const shortName = item.name.length > 22 ? item.name.substring(0, 20) + "..." : item.name;
-      doc.text(shortName, pageWidth / 2, yPos + qrSize + 5.5, { align: "center" });
+      const shortName = item.name.length > 25 ? item.name.substring(0, 23) + "..." : item.name;
+      doc.text(shortName, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
+      detailsY += 0.16;
+      
+      doc.text(`Size: ${item.size || "N/A"}`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
+      detailsY += 0.16;
+      
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      const formattedPrice = parseFloat(item.price).toFixed(2);
+      doc.text(`Unit Price:`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
+      detailsY += 0.18;
+      doc.text(`Rs. ${formattedPrice}`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
 
     } catch (err) {
       console.error("Failed to load QR for item", item.id);
@@ -268,6 +299,16 @@ const handleDownloadAllQR = async () => {
         
         <div className="flex items-center gap-3">
           {isAdmin && (
+            <div className="flex items-center gap-2">
+            <select 
+              value={qrSize} 
+              onChange={(e) => setQrSize(e.target.value)}
+              className="bg-white border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 shadow-sm outline-none"
+            >
+              <option value="2x1">2 x 1 inch</option>
+              <option value="2x2">2 x 2 inch</option>
+              <option value="3x2">3 x 2 inch</option>
+            </select>
             <button 
               onClick={handleDownloadAllQR}
               className="flex items-center gap-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg font-semibold shadow-sm transition-all"
@@ -275,6 +316,7 @@ const handleDownloadAllQR = async () => {
               <MdQrCodeScanner className="text-xl text-blue-600" /> 
               Download All QR Code
             </button>
+            </div>
           )}
           <Link
             to="/dashboard/inventory/addProduct"

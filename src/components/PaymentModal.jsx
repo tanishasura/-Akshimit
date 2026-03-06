@@ -4,6 +4,8 @@ export default function PaymentModal({ isOpen, onClose, total, onConfirm }) {
   const [loading, setLoading] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [printBill, setPrintBill] = useState(true);
+  
   if (!isOpen) return null;
 
   const handleConfirm = (method) => {
@@ -16,7 +18,8 @@ export default function PaymentModal({ isOpen, onClose, total, onConfirm }) {
         name: customerName, 
         phone: customerPhone 
     };
-onConfirm(method, info);
+    onConfirm(method, info, printBill);
+    setLoading(false); // Make sure to reset loading in case dialog stays open or re-opens
   };
 
   return (
@@ -24,23 +27,6 @@ onConfirm(method, info);
       <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl">
         <h2 className="text-2xl font-bold text-slate-800 mb-2">Complete Payment</h2>
         <p className="text-slate-500 mb-6">Total: <span className="text-blue-600 font-bold">₹{total.toFixed(2)}</span></p>
-        
-{/* <div className="space-y-3 mb-6">
-          <input 
-            type="text"
-            placeholder="Customer Name *"
-            className="w-full p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-100"
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-          />
-          <input 
-            type="text"
-            placeholder="Phone Number *"
-            className="w-full p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-100"
-            value={customerPhone}
-            onChange={(e) => setCustomerPhone(e.target.value)}
-          />
-        </div> */}
 
         <div className="space-y-4 mb-6">
           <div>
@@ -69,7 +55,7 @@ onConfirm(method, info);
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3 mb-6">
           {["Cash", "UPI / QR", "Card"].map((method) => (
             <button 
               key={method}
@@ -82,9 +68,22 @@ onConfirm(method, info);
             </button>
           ))}
         </div>
+
+        <div className="flex items-center gap-2 mb-6 p-3 bg-slate-50 rounded-lg border border-slate-100">
+            <input 
+              type="checkbox" 
+              id="printBill" 
+              className="w-4 h-4 accent-blue-600"
+              checked={printBill}
+              onChange={(e) => setPrintBill(e.target.checked)}
+            />
+            <label htmlFor="printBill" className="text-sm font-bold text-slate-700 cursor-pointer flex-1">
+              Automatically Print Bill
+            </label>
+        </div>
         
         {!loading && (
-          <button onClick={onClose} className="w-full mt-6 text-black-400 text-md font-medium rounded-lg p-3 bg-red-500 hover:bg-red-700">
+          <button onClick={onClose} className="w-full mt-2 text-white text-md font-medium rounded-lg p-3 bg-red-500 hover:bg-red-700 transition-colors">
             Cancel
           </button>
         )}

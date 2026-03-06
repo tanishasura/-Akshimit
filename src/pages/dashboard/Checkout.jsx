@@ -12,11 +12,13 @@ import CheckoutSearch from "../../components/CheckoutSearch";
 import CheckoutFilter from "../../components/CheckoutFilter";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { printBill } from "../../utils/printBill";
 
 export default function Checkout() {
   const navigate = useNavigate();
   const quickAddInputRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [toast, setToast] = useState("");
   const [filters, setFilters] = useState({
     size: "all",
     brand: "all",
@@ -282,7 +284,7 @@ const freshItems = response.data.map(serverItem => {
     setCart((prev) => prev.map((item) => item.id === id ? { ...item, qty: item.qty + delta } : item).filter((item) => item.qty > 0));
   };
 
-  const handleConfirmPayment = async (method, customerInfo) => {
+  const handleConfirmPayment = async (method, customerInfo, shouldPrintBill) => {
     if (!customerInfo) return;
     const transactionData = {
       id: `TXN-${Date.now()}`,
@@ -314,12 +316,23 @@ const freshItems = response.data.map(serverItem => {
       localStorage.removeItem("pending_discount_type");
       setShowModal(false);
       setRefreshTrigger((prev) => prev + 1);
-      navigate("/dashboard/transaction");
+      
+      if (shouldPrintBill) {
+        printBill(transactionData);
+      }
+      
+      setToast("Payment successful!");
+      setTimeout(() => setToast(""), 3000);
     } catch (err) { alert("Payment failed. Please check connection."); }
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 relative">
+      {toast && (
+        <div className="fixed top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-2 rounded-lg shadow-xl z-50 animate-bounce text-sm font-bold">
+          {toast}
+        </div>
+      )}
       {!isOnline && <div className="mb-4 p-2 bg-red-100 text-red-700 text-center rounded-lg font-bold">Offline Mode</div>}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-100px)]">
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden">
