@@ -11,6 +11,7 @@ class TransactionItem(Base):
     qty = Column(Integer)
     price = Column(Float)
     refunded_qty = Column(Integer, default=0)
+    refund_reason = Column(String, nullable=True)
 
     transaction = relationship("Transaction", back_populates="items")
 

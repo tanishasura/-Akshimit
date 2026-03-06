@@ -63,6 +63,7 @@ def process_item_refund(db: Session, txn_id: str, item_id: int, refund_data: dic
         raise HTTPException(status_code=400, detail="Cannot refund more than available quantity")
         
     item.refunded_qty += refund_qty
+    item.refund_reason = refund_data.get("refund_reason") or item.refund_reason
     
     # Optionally update overall transaction status
     txn = item.transaction
@@ -74,6 +75,7 @@ def process_item_refund(db: Session, txn_id: str, item_id: int, refund_data: dic
     elif any_refunded:
         txn.status = "Partially Refunded"
         
+    # Keep transaction-level reason as fallback
     txn.refund_reason = refund_data.get("refund_reason") or txn.refund_reason
 
     db.commit()
