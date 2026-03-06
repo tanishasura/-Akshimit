@@ -1,4 +1,4 @@
-export const printBill = (transaction, isCheckout = false, cart = []) => {
+export const printBill = (transaction, isCheckout = false, cart = [], appliedDiscount = 0) => {
   const items = isCheckout ? cart : transaction.items;
   const txnId = transaction.id || `TXN-${Date.now()}`;
   const date = transaction.date ? new Date(transaction.date).toLocaleString() : new Date().toLocaleString();
@@ -25,7 +25,7 @@ export const printBill = (transaction, isCheckout = false, cart = []) => {
   }
   
   const amount = transaction.amount || (subtotal + totalGst);
-  const discount = 0; // Would need to calculate from transaction if available
+  const discount = appliedDiscount || transaction.discount || 0;
 
   const billHTML = `
     <!DOCTYPE html>
@@ -34,13 +34,14 @@ export const printBill = (transaction, isCheckout = false, cart = []) => {
       <title>Invoice - ${txnId}</title>
       <style>
         @page {
-          size: 80mm auto;
+          size: 63.5mm auto;
           margin: 0;
         }
         body {
           font-family: 'Courier New', Courier, monospace;
-          font-size: 12px;
-          width: 80mm;
+          font-weight: 600;
+          font-size: 11px;
+          width: 63.5mm;
           margin: 0;
           padding: 5px;
           color: #000;
@@ -55,7 +56,9 @@ export const printBill = (transaction, isCheckout = false, cart = []) => {
         }
         .address {
           font-size: 10px;
+          font-weight: 700;
           margin-bottom: 5px;
+          line-height: 1.2;
         }
         .divider {
           border-top: 1px dashed #000;
@@ -134,7 +137,12 @@ export const printBill = (transaction, isCheckout = false, cart = []) => {
     <body>
       <div class="header">
         <div class="store-name">CLASSIFABS</div>
-        <div class="address">Fashion & Clothing Store</div>
+        <div class="address" style="margin-top: 3px;">
+          GSTIN -27BOQPG6860M1Z6<br>
+          LG4-5, Deccan Krishna Complex,<br>
+          Bypass Chowk, Madhavnagar Road,<br>
+          Sangli, Maharashtra 416416
+        </div>
       </div>
       
       <div class="divider"></div>

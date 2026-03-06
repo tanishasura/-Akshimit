@@ -19,7 +19,7 @@ export default function Inventory() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortType, setSortType] = useState("default");
   const [isDownloading, setIsDownloading] = useState(false);
-  const [qrSize, setQrSize] = useState("2x2");
+  const [qrSize, setQrSize] = useState("50x25");
 
   const [filters, setFilters] = useState({
     section: "all",
@@ -208,10 +208,15 @@ export default function Inventory() {
 
 const handleDownloadAllQR = async () => {
   const [w, h] = qrSize.split("x").map(Number);
+  const isLandscape = w > h;
+  // For custom formats in jsPDF, if it's landscape, it expects the base format to be [shorter, longer].
+  // Otherwise it double rotates and turns the labels sideways! 
+  const formatParams = isLandscape ? [h, w] : [w, h];
+  
   const doc = new jsPDF({
-    orientation: w > h ? "landscape" : "portrait",
-    unit: "in",
-    format: [w, h], 
+    orientation: isLandscape ? "landscape" : "portrait",
+    unit: "mm",
+    format: formatParams, 
   });
 
   const getBase64Image = (url) => {
@@ -238,19 +243,23 @@ const handleDownloadAllQR = async () => {
     try {
       const base64 = await getBase64Image(qrUrl);
       
-      if (i > 0) doc.addPage([w, h], w > h ? "landscape" : "portrait");
+      if (i > 0) doc.addPage(formatParams, isLandscape ? "landscape" : "portrait");
 
-      // Side-by-side layout: QR on left, details on right
-      const qrWidth = w * 0.50; // 50% for QR code area (used to be 45%)
-      const detailsX = w * 0.50; // Text starts right at 50% boundary (used to be 55%)
+      // Add 4mm general padding to left and right limits
+      const padding = 4;
+      const safeWidth = w - padding * 2;
+      
+      // Side-by-side layout: QR on left, details on right inside safe width
+      const qrWidth = safeWidth * 0.50; 
+      const detailsX = padding + safeWidth * 0.50; 
       
       // Calculate QR dimensions to fit in left half
-      let qrDim = h - 0.4;
-      if (qrDim > qrWidth - 0.2) qrDim = qrWidth - 0.2;
-      if (qrDim < 0.3) qrDim = 0.3;
+      let qrDim = h - 10;
+      if (qrDim > qrWidth - 5) qrDim = qrWidth - 5;
+      if (qrDim < 7.5) qrDim = 7.5;
       
-      // Center QR vertically in its half
-      const qrX = (qrWidth - qrDim) / 2;
+      // Center QR vertically in its half, but offset by left padding
+      const qrX = padding + (qrWidth - qrDim) / 2;
       const qrY = (h - qrDim) / 2;
       
       // Add QR code
@@ -258,32 +267,34 @@ const handleDownloadAllQR = async () => {
       
       // Add details on the right side
       // Calculate total height of text block to center vertically
-      const lineHeight = 0.16;
-      const totalTextHeight = 0.18 + lineHeight * 2 + 0.18; // ID + Name + Size + Unit Price gap
+      const lineHeight = 4.1;
+      const totalTextHeight = 4.6 + lineHeight * 2 + 4.6; // ID + Name + Size + MRP gap
       let detailsY = (h - totalTextHeight) / 2;
       
-      const detailsXOffset = 0.05;
+      const detailsXOffset = 1.3;
       
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
       doc.text(`${item.id}`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
-      detailsY += 0.18;
+      detailsY += 4.6;
       
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
       const shortName = item.name.length > 25 ? item.name.substring(0, 23) + "..." : item.name;
       doc.text(shortName, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
-      detailsY += 0.16;
+      detailsY += 4.1;
       
       doc.text(`Size: ${item.size || "N/A"}`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
-      detailsY += 0.16;
+      detailsY += 4.1;
       
       doc.setFontSize(11);
       doc.setFont("helvetica", "bold");
-      const formattedPrice = parseFloat(item.price).toFixed(2);
-      doc.text(`Unit Price:`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
-      detailsY += 0.18;
-      doc.text(`Rs. ${formattedPrice}`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
+      const gstPercent = parseFloat(item.gst || 5);
+      const mrp = parseFloat(item.price) * (1 + (gstPercent / 100));
+      const formattedMRP = mrp.toFixed(2);
+      doc.text(`MRP:`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
+      detailsY += 4.6;
+      doc.text(`Rs. ${formattedMRP}`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
 
     } catch (err) {
       console.error("Failed to load QR for item", item.id);
@@ -305,9 +316,10 @@ const handleDownloadAllQR = async () => {
               onChange={(e) => setQrSize(e.target.value)}
               className="bg-white border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 shadow-sm outline-none"
             >
-              <option value="2x1">2 x 1 inch</option>
-              <option value="2x2">2 x 2 inch</option>
-              <option value="3x2">3 x 2 inch</option>
+              <option value="50x25">50 x 25 mm</option>
+              <option value="75x50">75 x 50 mm</option>
+              <option value="50x50">50 x 50 mm</option>
+              <option value="100x50">100 x 50 mm</option>
             </select>
             <button 
               onClick={handleDownloadAllQR}

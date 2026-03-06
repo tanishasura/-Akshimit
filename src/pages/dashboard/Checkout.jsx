@@ -286,10 +286,21 @@ const freshItems = response.data.map(serverItem => {
 
   const handleConfirmPayment = async (method, customerInfo, shouldPrintBill) => {
     if (!customerInfo) return;
+    
+    // Calculate exact discount amount for the bill
+    const subtotalForDiscount = cart.reduce((acc, i) => acc + i.price * i.qty, 0);
+    let exactDiscountAmt = 0;
+    if (discountType === "percent") {
+      exactDiscountAmt = subtotalForDiscount * (parseFloat(discountValue || 0) / 100);
+    } else {
+      exactDiscountAmt = parseFloat(discountValue || 0);
+    }
+
     const transactionData = {
       id: `TXN-${Date.now()}`,
       date: new Date().toISOString(),
       amount: calculateFinalTotal(),
+      discount: exactDiscountAmt,
       method: method,
       customer_name: customerInfo.name,
       customer_phone: customerInfo.phone,
@@ -318,7 +329,7 @@ const freshItems = response.data.map(serverItem => {
       setRefreshTrigger((prev) => prev + 1);
       
       if (shouldPrintBill) {
-        printBill(transactionData);
+        printBill(transactionData, true, cart, exactDiscountAmt);
       }
       
       setToast("Payment successful!");

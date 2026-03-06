@@ -11,6 +11,7 @@ export default function AddProduct() {
     name: "",
     size: "",
     price: "",
+    mrp: "",
     color: "",
     material: "",
     brand: "",
@@ -31,7 +32,23 @@ export default function AddProduct() {
   ];
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let updatedData = { ...formData, [name]: value };
+
+    const gstPercent = parseFloat(updatedData.gst || 5);
+
+    if (name === "price") {
+      const priceVal = parseFloat(value || 0);
+      updatedData.mrp = (priceVal * (1 + gstPercent / 100)).toFixed(2);
+    } else if (name === "mrp") {
+      const mrpVal = parseFloat(value || 0);
+      updatedData.price = (mrpVal / (1 + gstPercent / 100)).toFixed(2);
+    } else if (name === "gst") {
+      const priceVal = parseFloat(updatedData.price || 0);
+      updatedData.mrp = (priceVal * (1 + gstPercent / 100)).toFixed(2);
+    }
+
+    setFormData(updatedData);
   };
 
   const handleColorSelect = (colorName) => {
@@ -48,8 +65,9 @@ export default function AddProduct() {
     setIsSubmitting(true);
 
     try {
+      const { mrp, ...restFormData } = formData;
       const payload = {
-        ...formData,
+        ...restFormData,
         price: parseFloat(formData.price),
         stock_qty: parseInt(formData.stock_qty),
         gst: parseFloat(formData.gst),
@@ -135,14 +153,18 @@ export default function AddProduct() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
              <div className="flex flex-col gap-2">
               <label className="text-sm font-bold text-slate-700">Price (₹)</label>
-              <input name="price" required onChange={handleChange} type="number" className="border border-slate-300 rounded-lg p-2.5" />
+              <input name="price" value={formData.price} required onChange={handleChange} type="number" step="0.01" min="0" className="border border-slate-300 rounded-lg p-2.5" />
             </div>
- <div className="flex flex-col gap-2">
+             <div className="flex flex-col gap-2">
               <label className="text-sm font-bold text-slate-700">GST (%)</label>
-              <input name="gst" value={formData.gst} required onChange={handleChange} type="number" className="border border-slate-300 rounded-lg p-2.5 text-black font-bold" placeholder="5" />
+              <input name="gst" value={formData.gst} required onChange={handleChange} type="number" step="0.01" min="0" className="border border-slate-300 rounded-lg p-2.5 text-black font-bold" placeholder="5" />
+            </div>
+             <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-slate-700">MRP (including taxes) (₹)</label>
+              <input name="mrp" value={formData.mrp} required onChange={handleChange} type="number" step="0.01" min="0" className="border border-slate-300 rounded-lg p-2.5" />
             </div>
 
           

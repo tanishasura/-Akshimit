@@ -10,8 +10,9 @@ export default function Update() {
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-const [isDownloading, setIsDownloading] = useState(false);
-  const [qrSize, setQrSize] = useState("2x2");
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [qrSize, setQrSize] = useState("50x25");
+  const [mrp, setMrp] = useState("");
 
   const session = JSON.parse(localStorage.getItem("user_session"));
   const isAdmin = session?.role === "admin";
@@ -25,7 +26,11 @@ const [isDownloading, setIsDownloading] = useState(false);
     const fetchProduct = async () => {
       try {
         const response = await axios.get(`http://127.0.0.1:8000/products/${id}`);
-        setProduct(response.data);
+        const data = response.data;
+        const gstPercent = parseFloat(data.gst || 5);
+        const priceVal = parseFloat(data.price || 0);
+        setProduct(data);
+        setMrp((priceVal * (1 + gstPercent / 100)).toFixed(2));
       } catch (err) {
         console.error("Fetch error:", err);
         alert("Product not found");
@@ -43,7 +48,8 @@ const [isDownloading, setIsDownloading] = useState(false);
     try {
       await axios.put(`http://127.0.0.1:8000/products/${id}`, {
         price: parseFloat(product.price),
-        stock_qty: parseInt(product.stock_qty)
+        stock_qty: parseInt(product.stock_qty),
+        gst: parseFloat(product.gst || 5)
       });
       alert("Product updated successfully!");
       navigate("/dashboard/inventory");
@@ -68,13 +74,16 @@ const [isDownloading, setIsDownloading] = useState(false);
   if (loading) return <div className="p-10 text-center font-bold text-slate-500">Connecting to Server...</div>;
 
 
-  const handleDownloadSingleQR = async () => {
+    const handleDownloadSingleQR = async () => {
     setIsDownloading(true);
     const [w, h] = qrSize.split("x").map(Number);
+    const isLandscape = w > h;
+    const formatParams = isLandscape ? [h, w] : [w, h];
+    
     const doc = new jsPDF({
-      orientation: w > h ? "landscape" : "portrait",
-      unit: "in",
-      format: [w, h], 
+      orientation: isLandscape ? "landscape" : "portrait",
+      unit: "mm",
+      format: formatParams, 
     });
 
     const getBase64Image = (url) => {
@@ -98,17 +107,21 @@ const [isDownloading, setIsDownloading] = useState(false);
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${product.id}`;
       const base64 = await getBase64Image(qrUrl);
       
-      // Side-by-side layout: QR on left, details on right
-      const qrWidth = w * 0.50; // 50% for QR code area (used to be 45%)
-      const detailsX = w * 0.50; // Text starts right at 50% boundary (used to be 55%)
+      // Add 4mm general padding to left and right limits
+      const padding = 4;
+      const safeWidth = w - padding * 2;
+      
+      // Side-by-side layout: QR on left, details on right inside safe width
+      const qrWidth = safeWidth * 0.50; 
+      const detailsX = padding + safeWidth * 0.50; 
       
       // Calculate QR dimensions to fit in left half
-      let qrDim = h - 0.4;
-      if (qrDim > qrWidth - 0.2) qrDim = qrWidth - 0.2;
-      if (qrDim < 0.3) qrDim = 0.3;
+      let qrDim = h - 10;
+      if (qrDim > qrWidth - 5) qrDim = qrWidth - 5;
+      if (qrDim < 7.5) qrDim = 7.5;
       
-      // Center QR vertically in its half
-      const qrX = (qrWidth - qrDim) / 2;
+      // Center QR vertically in its half, but offset by left padding
+      const qrX = padding + (qrWidth - qrDim) / 2;
       const qrY = (h - qrDim) / 2;
       
       // Add QR code
@@ -116,32 +129,34 @@ const [isDownloading, setIsDownloading] = useState(false);
       
       // Add details on the right side
       // Calculate total height of text block to center vertically
-      const lineHeight = 0.16;
-      const totalTextHeight = 0.18 + lineHeight * 2 + 0.18; // ID(0.18) + Name(0.16) + Size(0.16) + Unit Price(0.18) + Price amount(last line doesn't add to start pos offset)
-      let detailsY = (h - totalTextHeight) / 2; // Subtract total height from container height and divide by 2 for center point
+      const lineHeight = 4.1;
+      const totalTextHeight = 4.6 + lineHeight * 2 + 4.6; // ID + Name + Size + MRP gap
+      let detailsY = (h - totalTextHeight) / 2;
       
-      const detailsXOffset = 0.05; // Give it a tiny bit of left margin from center divider
+      const detailsXOffset = 1.3;
       
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
       doc.text(`${product.id}`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
-      detailsY += 0.18;
+      detailsY += 4.6;
       
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
       const displayName = product.name.length > 25 ? product.name.substring(0, 23) + "..." : product.name;
       doc.text(displayName, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
-      detailsY += 0.16;
+      detailsY += 4.1;
       
       doc.text(`Size: ${product.size || "N/A"}`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
-      detailsY += 0.16;
+      detailsY += 4.1;
       
       doc.setFontSize(11);
       doc.setFont("helvetica", "bold");
-      const formattedPrice = parseFloat(product.price).toFixed(2);
-      doc.text(`Unit Price:`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
-      detailsY += 0.18;
-      doc.text(`Rs. ${formattedPrice}`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
+      const gstPercent = parseFloat(product.gst || 5);
+      const mrp = parseFloat(product.price) * (1 + (gstPercent / 100));
+      const formattedMRP = mrp.toFixed(2);
+      doc.text(`MRP:`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
+      detailsY += 4.6;
+      doc.text(`Rs. ${formattedMRP}`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
       
       doc.save(`QR_${product.id}.pdf`);
     } catch (err) {
@@ -164,9 +179,10 @@ const [isDownloading, setIsDownloading] = useState(false);
             onChange={(e) => setQrSize(e.target.value)}
             className="bg-slate-100 border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none"
           >
-            <option value="2x1">2 x 1 inch</option>
-            <option value="2x2">2 x 2 inch</option>
-            <option value="3x2">3 x 2 inch</option>
+            <option value="50x25">50 x 25 mm</option>
+            <option value="75x50">75 x 50 mm</option>
+            <option value="50x50">50 x 50 mm</option>
+            <option value="100x50">100 x 50 mm</option>
           </select>
           <button 
               type="button"
@@ -184,17 +200,60 @@ const [isDownloading, setIsDownloading] = useState(false);
         
         <form onSubmit={handleUpdate} className="space-y-4">
          
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-1">Price (₹)</label>
-            <input 
-              type="number" 
-              min='0'
-              step="0.01"
-              required
-              className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
-              value={product.price}
-              onChange={(e) => setProduct({...product, price: e.target.value})}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">Price (₹)</label>
+              <input 
+                type="number" 
+                min='0'
+                step="0.01"
+                required
+                className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
+                value={product.price}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setProduct({...product, price: val});
+                  const gstPercent = parseFloat(product.gst || 5);
+                  setMrp((parseFloat(val || 0) * (1 + gstPercent / 100)).toFixed(2));
+                }}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">GST (%)</label>
+              <input 
+                type="number" 
+                min='0'
+                step="0.01"
+                required
+                className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-black font-bold"
+                value={product.gst || 5}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setProduct({...product, gst: val});
+                  const priceVal = parseFloat(product.price || 0);
+                  setMrp((priceVal * (1 + parseFloat(val || 0) / 100)).toFixed(2));
+                }}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">MRP (including taxes) (₹)</label>
+              <input 
+                type="number" 
+                min='0'
+                step="0.01"
+                required
+                className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
+                value={mrp}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setMrp(val);
+                  const gstPercent = parseFloat(product.gst || 5);
+                  setProduct({...product, price: (parseFloat(val || 0) / (1 + gstPercent / 100)).toFixed(2)});
+                }}
+              />
+            </div>
           </div>
 
           <div>
