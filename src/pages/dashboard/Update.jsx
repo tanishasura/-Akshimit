@@ -45,10 +45,27 @@ export default function Update() {
     fetchProduct();
   }, [id, isAdmin, navigate]);
 
+  const colorOptions = [
+    { name: "Red", class: "bg-red-500" }, { name: "Black", class: "bg-black" },
+    { name: "Blue", class: "bg-blue-700" }, { name: "Purple", class: "bg-purple-800" },
+    { name: "Grey", class: "bg-gray-500" }, { name: "White", class: "bg-white border border-slate-300" },
+    { name: "Maroon", class: "bg-red-700" }, { name: "Khaki", class: "bg-[#C3B091]" },
+    { name: "Dark Brown", class: "bg-red-900" }, { name: "Pink", class: "bg-pink-400" },
+    { name: "Sky Blue", class: "bg-blue-400" }, { name: "Orange", class: "bg-orange-500" },
+    { name: "Yellow", class: "bg-yellow-400" }, { name: "Green", class: "bg-green-600" },
+  ];
+
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
       await axios.put(`http://127.0.0.1:8000/products/${id}`, {
+        name: product.name,
+        brand: product.brand,
+        size: product.size,
+        material: product.material,
+        type: product.type,
+        color: product.color,
+        section: product.section,
         price: parseFloat(product.price),
         stock_qty: parseInt(product.stock_qty),
         gst: parseFloat(product.gst || 5)
@@ -200,17 +217,78 @@ export default function Update() {
           </div>
 
         
-        <form onSubmit={handleUpdate} className="space-y-4">
-         
+        <form onSubmit={handleUpdate} className="space-y-6">
+          {/* Inputs Row 1 */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Price (₹)</label>
+            <div className="md:col-span-2 flex flex-col gap-2">
+              <label className="text-sm font-bold text-slate-700">Product Name</label>
+              <input name="name" required value={product.name || ""} onChange={(e) => setProduct({...product, name: e.target.value})} type="text" className="border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-slate-700">Brand</label>
+              <input name="brand" required value={product.brand || ""} onChange={(e) => setProduct({...product, brand: e.target.value})} type="text" className="border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+            </div>
+          </div>
+
+          {/* Size, Material, Type */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-slate-700">Size</label>
+              <input name="size" required value={product.size || ""} onChange={(e) => setProduct({...product, size: e.target.value})} type="text" className="border border-slate-300 rounded-lg p-2.5 outline-none" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-slate-700">Material</label>
+              <input name="material" value={product.material || ""} onChange={(e) => setProduct({...product, material: e.target.value})} type="text" className="border border-slate-300 rounded-lg p-2.5 outline-none" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-slate-700">Type</label>
+              <input name="type" value={product.type || ""} onChange={(e) => setProduct({...product, type: e.target.value})} type="text" className="border border-slate-300 rounded-lg p-2.5 outline-none" />
+            </div>
+          </div>
+
+          {/* Color Select */}
+          <div className="flex flex-col gap-3">
+            <label className="text-sm font-bold text-slate-700">Select Color: <span className="text-blue-600 ml-2">{product.color || "None"}</span></label>
+            <div className="flex flex-wrap gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+              {colorOptions.map((color) => (
+                <button key={color.name} type="button" onClick={() => setProduct({...product, color: color.name})} className={`w-5 h-5 rounded-full ${color.class} ${product.color === color.name ? "ring-4 ring-blue-500" : ""}`} />
+              ))}
+            </div>
+          </div>
+
+          {/* Section & Stock */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-slate-700">Section</label>
+              <select name="section" required value={product.section || "Men"} onChange={(e) => setProduct({...product, section: e.target.value})} className="border border-slate-300 rounded-lg p-2.5 bg-white outline-none">
+                <option value="Men">Men</option>
+                <option value="Women">Women</option>
+                <option value="Kids">Kids</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-slate-700">Stock Quantity</label>
+              <input 
+                type="number" 
+                min='0'
+                required
+                className="border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
+                value={product.stock_qty}
+                onChange={(e) => setProduct({...product, stock_qty: e.target.value})}
+              />
+            </div>
+          </div>
+
+          {/* Pricing fields */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-slate-700">Price (₹)</label>
               <input 
                 type="number" 
                 min='0'
                 step="0.01"
                 required
-                className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
                 value={product.price}
                 onChange={(e) => {
                   const val = e.target.value;
@@ -221,14 +299,14 @@ export default function Update() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">GST (%)</label>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-slate-700">GST (%)</label>
               <input 
                 type="number" 
                 min='0'
                 step="0.01"
                 required
-                className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-black font-bold"
+                className="border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-black font-bold"
                 value={product.gst || 5}
                 onChange={(e) => {
                   const val = e.target.value;
@@ -239,14 +317,14 @@ export default function Update() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">MRP (including taxes) (₹)</label>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-slate-700">MRP (including taxes) (₹)</label>
               <input 
                 type="number" 
                 min='0'
                 step="0.01"
                 required
-                className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
                 value={mrp}
                 onChange={(e) => {
                   const val = e.target.value;
@@ -258,19 +336,7 @@ export default function Update() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-1">Stock Quantity</label>
-            <input 
-              type="number" 
-              min='0'
-              required
-              className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
-              value={product.stock_qty}
-              onChange={(e) => setProduct({...product, stock_qty: e.target.value})}
-            />
-          </div>
-
-          <div className="flex gap-4 pt-6">
+          <div className="flex gap-4 pt-4">
             <button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors">
               <IoMdSave className="text-xl" /> Update Product
             </button>
