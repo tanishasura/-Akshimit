@@ -186,33 +186,14 @@ const handleDownloadAllQR = async () => {
         <h1 className="text-3xl font-bold text-slate-800">Inventory Management</h1>
         
         <div className="flex items-center gap-3">
-          {/* {isAdmin && (
-            <div className="flex items-center gap-2">
-            <select 
-              value={qrSize} 
-              onChange={(e) => setQrSize(e.target.value)}
-              className="bg-white border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 shadow-sm outline-none"
+          {isAdmin && (
+            <Link
+              to="/dashboard/inventory/addProduct"
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold shadow-md"
             >
-              <option value="50x25">50 x 25 mm</option>
-              <option value="75x50">75 x 50 mm</option>
-              <option value="50x50">50 x 50 mm</option>
-              <option value="100x50">100 x 50 mm</option>
-            </select>
-            <button 
-              onClick={handleDownloadAllQR}
-              className="flex items-center gap-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg font-semibold shadow-sm transition-all"
-            >
-              <MdQrCodeScanner className="text-xl text-blue-600" /> 
-              Download All QR Code
-            </button>
-            </div>
-          )} */}
-          <Link
-            to="/dashboard/inventory/addProduct"
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold shadow-md"
-          >
-            <IoMdAdd className="text-xl" /> Add New Product
-          </Link>
+              <IoMdAdd className="text-xl" /> Add New Product
+            </Link>
+          )}
         </div>
       </div>
 

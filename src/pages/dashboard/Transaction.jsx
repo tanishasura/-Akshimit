@@ -88,9 +88,7 @@ export default function Transaction() {
   };
 
   useEffect(() => {
-    if (!isAdmin) {
-      navigate("/dashboard/checkout");
-    }
+    // navigate removed
   }, [isAdmin, navigate]);
 
   const fetchTransactions = async () => {
@@ -108,18 +106,16 @@ export default function Transaction() {
   };
 
   useEffect(() => {
-    if (isAdmin) {
-      fetchTransactions();
-    }
-  }, [isAdmin]);
+    fetchTransactions();
+  }, []);
 
   useEffect(() => {
-    if (isAdmin && location.state && location.state.amount > 0) {
+    if (location.state && location.state.amount > 0) {
       setToast("Payment Successful!");
       window.history.replaceState({}, document.title);
       setTimeout(() => setToast(""), 3000);
     }
-  }, [location.state, isAdmin]);
+  }, [location.state]);
 
   const copyToClipboard = (text, e) => {
     if (e) e.stopPropagation();
@@ -170,7 +166,7 @@ export default function Transaction() {
     }
   };
 
-  if (!isAdmin) return null;
+  // if (!isAdmin) return null; // removed
 
   return (
     <div className="p-6 relative">

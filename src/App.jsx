@@ -60,13 +60,13 @@ export default function App() {
           }/>
 
           <Route path="transaction" element={
-            <ProtectedRoute allowAdminOnly={true}>
+            <ProtectedRoute allowAdminOnly={false}>
               <Transaction/>
             </ProtectedRoute>
           }/>
 
           <Route path="refund-details/:id" element={
-  <ProtectedRoute allowAdminOnly={true}>
+  <ProtectedRoute allowAdminOnly={false}>
     <RefundDetail />
   </ProtectedRoute>
 }/>

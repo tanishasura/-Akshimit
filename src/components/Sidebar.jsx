@@ -52,19 +52,17 @@ export default function Sidebar({ isCollapsed }) {
             {!isCollapsed && <span className="ml-3 font-medium text-nowrap">Inventory Details</span>}
           </NavLink>
 
-          {isAdmin && (
-            <NavLink
-              to="/dashboard/transaction"
-              className={({ isActive }) =>
-                `flex items-center p-3 rounded-lg transition-all ${
-                  isActive ? "bg-blue-600 text-white" : "hover:bg-slate-800 text-slate-400"
-                }`
-              }
-            >
-              <span className="text-xl shrink-0"><GrTransaction /></span>
-              {!isCollapsed && <span className="ml-3 font-medium text-nowrap">Transaction</span>}
-            </NavLink>
-          )}
+          <NavLink
+            to="/dashboard/transaction"
+            className={({ isActive }) =>
+              `flex items-center p-3 rounded-lg transition-all ${
+                isActive ? "bg-blue-600 text-white" : "hover:bg-slate-800 text-slate-400"
+              }`
+            }
+          >
+            <span className="text-xl shrink-0"><GrTransaction /></span>
+            {!isCollapsed && <span className="ml-3 font-medium text-nowrap">Transaction</span>}
+          </NavLink>
         </nav>
 
        
