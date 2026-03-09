@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { IoIosArrowDown } from "react-icons/io";
 import { FiFilter } from "react-icons/fi";
+import { getColorCode } from "../utils/colorUtils";
 
 export default function InventoryFilter({
   filters,
@@ -141,9 +142,7 @@ export default function InventoryFilter({
                       onClick={() => handleSelect("color", colorName)}
                       title={colorName}
                       style={{
-                        backgroundColor: colorName
-                          .toLowerCase()
-                          .replace(" ", ""),
+                        backgroundColor: getColorCode(colorName),
                       }}
                       className={`w-6 h-6 aspect-square rounded-sm transition-all transform hover:scale-110 flex items-center justify-center border border-slate-200 ${
                         filters.color === colorName

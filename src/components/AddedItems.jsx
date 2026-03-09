@@ -1,4 +1,5 @@
 import React from 'react';
+import { getColorCode } from '../utils/colorUtils';
 
 export default function AddedItems({ cart, updateQty, clearCart, discountValue = 0, discountType = "percent" }) {
   // Calculate total 
@@ -51,7 +52,7 @@ export default function AddedItems({ cart, updateQty, clearCart, discountValue =
                       {item.color && item.color.toLowerCase() !== 'all' && item.color.toLowerCase() !== 'n/a' && (
                         <div 
                           className="w-3 h-3 rounded-sm border border-slate-300 shadow-[0_1px_2px_rgba(0,0,0,0.1)]"
-                          style={{ backgroundColor: item.color.toLowerCase() }}
+                          style={{ backgroundColor: getColorCode(item.color) }}
                           title={item.color}
                         />
                       )}

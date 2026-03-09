@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getColorCode } from '../utils/colorUtils';
 
 export default function InventoryTable({ processedItems }) {
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ export default function InventoryTable({ processedItems }) {
                       {item.color && item.color.toLowerCase() !== 'all' && item.color.toLowerCase() !== 'n/a' ? (
                         <div 
                           className="w-4 h-4 rounded-sm border border-slate-300 shadow-sm"
-                          style={{ backgroundColor: item.color.toLowerCase() }}
+                          style={{ backgroundColor: getColorCode(item.color) }}
                           title={item.color}
                         />
                       ) : null}

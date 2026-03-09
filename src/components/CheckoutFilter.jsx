@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { IoIosArrowDown } from "react-icons/io";
 import { FiFilter } from "react-icons/fi";
 import { GiCheckMark } from "react-icons/gi"; 
+import { getColorCode } from "../utils/colorUtils";
 
 export default function CheckoutFilter({
   filters,
@@ -105,7 +106,7 @@ export default function CheckoutFilter({
                       type="button"
                       onClick={() => handleSelect("color", colorName)}
                       title={colorName}
-                      style={{ backgroundColor: colorName.toLowerCase().replace(/\s/g, "") }}
+                      style={{ backgroundColor: getColorCode(colorName) }}
                       className={`w-6 h-6 rounded-sm flex items-center justify-center border border-slate-200 ${
                         filters.color === colorName ? "ring-2 ring-blue-500 ring-offset-1 shadow-md" : ""
                       }`}

@@ -13,11 +13,7 @@ export default function Update() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [qrSize, setQrSize] = useState("50x50");
-  const [heightvalue, setHeight] = useState(25)
-  const [qrSizevisible, setQrSizeVisible] = useState("50x25");
-
-
+  const [qrSize, setQrSize] = useState("50x25");
   const [mrp, setMrp] = useState("");
 
   const session = JSON.parse(localStorage.getItem("user_session"));
@@ -76,47 +72,21 @@ export default function Update() {
     }
   };
 
-  const handleQrSizeChange = (e) => {
-    const value = e.target.value;
-    // console.log("Selected QR size:", value);
-    setQrSizeVisible(value);
-  
-    if (value === "50x25") {
-      setQrSize("50x50");
-      setHeight(25);
-    } else if (value === "75x50") {
-      setQrSize("75x75");
-      setHeight(50);
-    } else if (value === "50x50") {
-      setQrSize("50x50");
-      setHeight(50);
-    } else if (value === "100x50") {
-      setQrSize("100x100");
-      setHeight(50);
-    }
-  };
-
   if (!isAdmin) return null; 
   if (loading) return <div className="p-10 text-center font-bold text-slate-500">Connecting to Server...</div>;
 
 
     const handleDownloadSingleQR = async () => {
     setIsDownloading(true);
-    console.log("Generating QR code with size:", qrSize.split("x").map(Number));
     const [w, h] = qrSize.split("x").map(Number);
     const isLandscape = w > h;
-    const formatParams = [w,h];
+    const formatParams = [w, h];
     
     const doc = new jsPDF({
       orientation: isLandscape ? "landscape" : "portrait",
       unit: "mm",
       format: formatParams, 
     });
-
-    // Printer calibration margins (in mm)
-    const marginTop = 0;
-    const marginLeft = 0;
-    const scale = 1; // 1 = 100% scale
 
     const getBase64Image = (url) => {
       return new Promise((resolve, reject) => {
@@ -144,61 +114,53 @@ export default function Update() {
       const safeWidth = w - padding * 2;
       
       // Side-by-side layout: QR on left, details on right inside safe width
-      const qrWidth = safeWidth * 0.50 * scale; 
-      const detailsX = (padding + safeWidth * 0.50) * scale; 
+      const qrWidth = safeWidth * 0.50; 
+      const detailsX = padding + safeWidth * 0.50; 
       
       // Calculate QR dimensions to fit in left half
-      let qrDim = (heightvalue - 10) * scale;
+      let qrDim = h - 10;
       if (qrDim > qrWidth - 5) qrDim = qrWidth - 5;
-      if (qrDim < 7.5 * scale) qrDim = 7.5 * scale;
+      if (qrDim < 7.5) qrDim = 7.5;
       
       // Center QR vertically in its half, but offset by left padding
-      const qrX = padding + (qrWidth - qrDim) / 2 + marginLeft;
-      const qrY = ((heightvalue * scale) - qrDim) / 2 + marginTop;
+      const qrX = padding + (qrWidth - qrDim) / 2;
+      const qrY = (h - qrDim) / 2;
       
       // Add QR code
       doc.addImage(base64, "PNG", qrX, qrY, qrDim, qrDim);
       
       // Add details on the right side
       // Calculate total height of text block to center vertically
-      const lineHeight = 4.1 * scale;
-      const totalTextHeight = (4.6 + 4.1 * 2 + 4.6) * scale; // ID + Name + Size + MRP gap
-      let detailsY = ((heightvalue * scale) - totalTextHeight) / 2 + marginTop;
+      const lineHeight = 4.1;
+      const totalTextHeight = 4.6 + lineHeight * 2 + 4.6; // ID + Name + Size + MRP gap
+      let detailsY = (h - totalTextHeight) / 2;
       
-      const detailsXOffset = 1.3 * scale;
-      const finalDetailsX = detailsX + detailsXOffset + marginLeft;
+      const detailsXOffset = 1.3;
       
-      doc.setFontSize(10 * scale);
+      doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
-      doc.text(`${product.id}`, finalDetailsX, detailsY, { align: "left", baseline: "top" });
-      detailsY += 4.6 * scale;
+      doc.text(`${product.id}`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
+      detailsY += 4.6;
       
-      doc.setFontSize(9 * scale);
+      doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
       const displayName = product.name.length > 25 ? product.name.substring(0, 23) + "..." : product.name;
-      doc.text(displayName, finalDetailsX, detailsY, { align: "left", baseline: "top" });
-      detailsY += 4.1 * scale;
+      doc.text(displayName, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
+      detailsY += 4.1;
       
-      doc.text(`Size: ${product.size || "N/A"}`, finalDetailsX, detailsY, { align: "left", baseline: "top" });
-      detailsY += 4.1 * scale;
+      doc.text(`Size: ${product.size || "N/A"}`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
+      detailsY += 4.1;
       
-      doc.setFontSize(11 * scale);
+      doc.setFontSize(11);
       doc.setFont("helvetica", "bold");
       const gstPercent = parseFloat(product.gst || 5);
       const mrp = parseFloat(product.price) * (1 + (gstPercent / 100));
       const formattedMRP = mrp.toFixed(2);
-      doc.text(`MRP:`, finalDetailsX, detailsY, { align: "left", baseline: "top" });
-      detailsY += 4.6 * scale;
-      doc.text(`Rs. ${formattedMRP}`, finalDetailsX, detailsY, { align: "left", baseline: "top" });
+      doc.text(`MRP:`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
+      detailsY += 4.6;
+      doc.text(`Rs. ${formattedMRP}`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
       
-      // doc.save(`QR_${product.id}.pdf`);
-
-      doc.autoPrint();
-      const pdfUrl = doc.output("bloburl");
-      const printWindow = window.open(pdfUrl, "_blank");
-      if (!printWindow) {
-        alert("Please allow popups to print the QR code");
-      }
+      doc.save(`QR_${product.id}.pdf`);
     } catch (err) {
       console.error("QR Generation failed", err);
       alert("Failed to generate QR code image.");
@@ -215,9 +177,8 @@ export default function Update() {
         
         <div className="flex items-center gap-2">
           <select 
-            value={qrSizevisible} 
-            // onChange={(e) => setQrSize(e.target.value)}
-            onChange={handleQrSizeChange}
+            value={qrSize} 
+            onChange={(e) => setQrSize(e.target.value)}
             className="bg-slate-100 border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none"
           >
             <option value="50x25">50 x 25 mm</option>
@@ -232,7 +193,7 @@ export default function Update() {
               className="flex items-center gap-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg transition-colors font-semibold"
             >
               <MdQrCodeScanner className="text-blue-600 text-lg" />
-              {isDownloading ? "Generating..." : "Print QR"}
+              {isDownloading ? "Generating..." : "Download QR"}
             </button>
         </div>
 

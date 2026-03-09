@@ -113,6 +113,11 @@ export default function Update() {
       format: formatParams, 
     });
 
+    // Printer calibration margins (in mm)
+    const marginTop = 0;
+    const marginLeft = 0;
+    const scale = 1; // 1 = 100% scale
+
     const getBase64Image = (url) => {
       return new Promise((resolve, reject) => {
         const img = new Image();
@@ -139,53 +144,75 @@ export default function Update() {
       const safeWidth = w - padding * 2;
       
       // Side-by-side layout: QR on left, details on right inside safe width
-      const qrWidth = safeWidth * 0.50; 
-      const detailsX = padding + safeWidth * 0.50; 
+      const qrWidth = safeWidth * 0.50 * scale; 
+      const detailsX = (padding + safeWidth * 0.50) * scale; 
       
       // Calculate QR dimensions to fit in left half
-      let qrDim = heightvalue - 10;
+      let qrDim = (heightvalue - 10) * scale;
       if (qrDim > qrWidth - 5) qrDim = qrWidth - 5;
-      if (qrDim < 7.5) qrDim = 7.5;
+      if (qrDim < 7.5 * scale) qrDim = 7.5 * scale;
       
       // Center QR vertically in its half, but offset by left padding
-      const qrX = padding + (qrWidth - qrDim) / 2;
-      const qrY = (heightvalue - qrDim) / 2;
+      // console.log(qrWidth, safeWidth, qrDim);
+      const qrX = padding + (qrWidth - qrDim) / 2 + marginLeft;
+      const qrY = ((heightvalue * scale) - qrDim) / 2 + marginTop;
       
       // Add QR code
-      doc.addImage(base64, "PNG", qrX, qrY, qrDim, qrDim);
+      // console.log(qrX, qrY, qrDim);
+      // doc.addImage(base64, "PNG", qrX, qrY, qrDim, qrDim);
+      doc.addImage(base64, "PNG", 0, 0, qrDim, qrDim);
+
       
       // Add details on the right side
       // Calculate total height of text block to center vertically
-      const lineHeight = 4.1;
-      const totalTextHeight = 4.6 + lineHeight * 2 + 4.6; // ID + Name + Size + MRP gap
-      let detailsY = (heightvalue - totalTextHeight) / 2;
+      const lineHeight = 4.1 * scale;
+      const totalTextHeight = (4.6 + 4.1 * 2 + 4.6) * scale; // ID + Name + Size + MRP gap
+      // let detailsY = ((heightvalue * scale) - totalTextHeight) / 2 + marginTop;
+      let detailsY = 3.8-2.8;
+      console.log("1", detailsY);
       
-      const detailsXOffset = 1.3;
+
+      const detailsXOffset = 1.3 * scale;
+      const finalDetailsX = detailsX + detailsXOffset + marginLeft;
       
-      doc.setFontSize(10);
+      doc.setFontSize(10 * scale);
       doc.setFont("helvetica", "bold");
-      doc.text(`${product.id}`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
-      detailsY += 4.6;
+      doc.text(`${product.id}`, finalDetailsX, detailsY, { align: "left", baseline: "top" });
+      detailsY += 4.6 * scale;
+      console.log("2", detailsY);
+
       
-      doc.setFontSize(9);
+      doc.setFontSize(9 * scale);
       doc.setFont("helvetica", "normal");
       const displayName = product.name.length > 25 ? product.name.substring(0, 23) + "..." : product.name;
-      doc.text(displayName, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
-      detailsY += 4.1;
+      doc.text(displayName, finalDetailsX, detailsY, { align: "left", baseline: "top" });
+      detailsY += 4.1 * scale;
+      console.log("3", detailsY);
+
       
-      doc.text(`Size: ${product.size || "N/A"}`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
-      detailsY += 4.1;
+      doc.text(`Size: ${product.size || "N/A"}`, finalDetailsX, detailsY, { align: "left", baseline: "top" });
+      detailsY += 4.1 * scale;
+      console.log("4", detailsY);
       
-      doc.setFontSize(11);
+      doc.setFontSize(11 * scale);
       doc.setFont("helvetica", "bold");
       const gstPercent = parseFloat(product.gst || 5);
       const mrp = parseFloat(product.price) * (1 + (gstPercent / 100));
       const formattedMRP = mrp.toFixed(2);
-      doc.text(`MRP:`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
-      detailsY += 4.6;
-      doc.text(`Rs. ${formattedMRP}`, detailsX + detailsXOffset, detailsY, { align: "left", baseline: "top" });
+      doc.text(`MRP:`, finalDetailsX, detailsY, { align: "left", baseline: "top" });
+      detailsY += 4.6 * scale;
+      console.log("5", detailsY);
+
+      doc.text(`Rs. ${formattedMRP}`, finalDetailsX, detailsY, { align: "left", baseline: "top" });
       
-      doc.save(`QR_${product.id}.pdf`);
+      // doc.save(`QR_${product.id}.pdf`);
+
+      doc.autoPrint();
+      const pdfUrl = doc.output("bloburl");
+      const printWindow = window.open(pdfUrl, "_blank");
+      if (!printWindow) {
+        alert("Please allow popups to print the QR code");
+      }
     } catch (err) {
       console.error("QR Generation failed", err);
       alert("Failed to generate QR code image.");
@@ -219,7 +246,7 @@ export default function Update() {
               className="flex items-center gap-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg transition-colors font-semibold"
             >
               <MdQrCodeScanner className="text-blue-600 text-lg" />
-              {isDownloading ? "Generating..." : "Download QR"}
+              {isDownloading ? "Generating..." : "Print QR"}
             </button>
         </div>
 

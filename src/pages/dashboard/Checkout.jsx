@@ -13,6 +13,7 @@ import CheckoutFilter from "../../components/CheckoutFilter";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { printBill } from "../../utils/printBill";
+import { getColorCode } from "../../utils/colorUtils";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -375,7 +376,7 @@ const freshItems = response.data.map(serverItem => {
                         {item.color && item.color.toLowerCase() !== 'all' && item.color.toLowerCase() !== 'n/a' ? (
                           <div 
                             className="w-4 h-4 rounded-sm border border-slate-300 shadow-sm"
-                            style={{ backgroundColor: item.color.toLowerCase() }}
+                            style={{ backgroundColor: getColorCode(item.color) }}
                             title={item.color}
                           />
                         ) : null}
