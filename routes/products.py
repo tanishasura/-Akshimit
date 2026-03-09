@@ -21,6 +21,13 @@ class ProductCreate(BaseModel):
     
 
 class ProductUpdate(BaseModel):
+    name: Optional[str] = None
+    material: Optional[str] = None
+    color: Optional[str] = None
+    size: Optional[str] = None
+    brand: Optional[str] = None
+    section: Optional[str] = None
+    type: Optional[str] = None
     price: Optional[float] = None
     stock_qty: Optional[int] = None
     gst: Optional[float] = None
