@@ -22,7 +22,6 @@ export default function Inventory() {
   // const [qrSize, setQrSize] = useState("50x25");
 
   const [filters, setFilters] = useState({
-    section: "all",
     size: "all",
     brand: "all",
     color: "all",
@@ -36,7 +35,6 @@ export default function Inventory() {
           search: searchTerm,
           size: filters.size === "all" ? null : filters.size,
           color: filters.color === "all" ? null : filters.color,
-          section: filters.section === "all" ? null : filters.section,
           brand: filters.brand === "all" ? null : filters.brand
         }
       });
@@ -72,7 +70,6 @@ export default function Inventory() {
   }, [fetchProducts]);
 
   const brands = useMemo(() => [...new Set(items.map((item) => item.brand))], [items]);
-  const sections = useMemo(() => [...new Set(items.map((item) => item.section))], [items]);
   const colors = useMemo(() => [...new Set(items.map((item) => item.color))], [items]);
   const sizes = useMemo(() => [...new Set(items.map((item) => item.size))], [items]);
 
@@ -205,7 +202,6 @@ const handleDownloadAllQR = async () => {
           <InventoryFilter
             filters={filters}
             setFilters={setFilters}
-            sections={sections}
             sizes={sizes}
             brands={brands}
             colors={colors}
@@ -213,6 +209,14 @@ const handleDownloadAllQR = async () => {
           <InventorySort sortType={sortType} setSortType={setSortType} />
         </div>
       </div>
+
+      {!loading && (
+        <div className="flex items-center gap-3 text-sm text-slate-600 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm w-fit">
+          <span className="font-medium">Showing <span className="text-blue-600 font-bold">{processedItems.length}</span> item{processedItems.length !== 1 ? "s" : ""}</span>
+          <span className="text-slate-300">|</span>
+          <span className="font-medium">Total Stock: <span className="text-emerald-600 font-bold">{processedItems.reduce((sum, item) => sum + (Number(item.stock_qty) || 0), 0)}</span> units</span>
+        </div>
+      )}
 
       {loading ? (
         <div className="p-20 text-center text-xl font-bold text-slate-500 animate-pulse">

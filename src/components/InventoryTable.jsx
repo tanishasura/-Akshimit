@@ -28,7 +28,7 @@ export default function InventoryTable({ processedItems }) {
                 <th className="px-6 py-4 text-center w-px whitespace-nowrap">GST (%)</th>
                 <th className="px-6 py-4 text-center w-px whitespace-nowrap">Type</th>
                 <th className="px-6 py-4 text-center w-px whitespace-nowrap">Material</th>
-                <th className="px-6 py-4 text-center w-px whitespace-nowrap">Section</th>
+
                 <th className="px-6 py-4 w-px whitespace-nowrap">Brand</th>
                 <th className="px-6 py-4 text-center w-px whitespace-nowrap">Stock</th>
               </tr>
@@ -64,7 +64,7 @@ export default function InventoryTable({ processedItems }) {
                   </td>
                   <td className="px-6 py-4 text-center text-slate-800 w-px whitespace-nowrap">{item.type}</td>
                   <td className="px-6 py-4 text-center text-slate-800 w-px whitespace-nowrap">{item.material}</td>
-                  <td className="px-6 py-4 text-center capitalize text-slate-600 w-px whitespace-nowrap">{item.section}</td>
+
                   <td className="px-6 py-4 text-slate-800 w-px whitespace-nowrap">{item.brand}</td>
                   <td className="px-6 py-4 text-center w-px whitespace-nowrap">
                     <span

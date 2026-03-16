@@ -6,7 +6,6 @@ import { getColorCode } from "../utils/colorUtils";
 export default function InventoryFilter({
   filters,
   setFilters,
-  sections,
   sizes,
   brands,
   colors,
@@ -21,7 +20,7 @@ export default function InventoryFilter({
   };
 
   const resetAll = () => {
-    setFilters({ section: "all", size: "all", brand: "all", color: "all" });
+    setFilters({ size: "all", brand: "all", color: "all" });
     setIsOpen(false);
   };
 
@@ -65,36 +64,6 @@ export default function InventoryFilter({
               >
                 Reset All Filters
               </button>
-
-              {/* SECTIONS */}
-              <div className="text-[10px] font-bold text-slate-400 uppercase px-4 pt-3 pb-1 border-b">
-                Sections
-              </div>
-              <div className="grid grid-cols-2 gap-1 p-1">
-                <button
-                  onClick={() => handleSelect("section", "all")}
-                  className={`text-left px-4 py-1.5 text-sm rounded ${
-                    filters.section === "all"
-                      ? "bg-slate-100 text-slate-900"
-                      : "text-slate-600 hover:bg-slate-50"
-                  }`}
-                >
-                  All
-                </button>
-                {sections.map((sec) => (
-                  <button
-                    key={sec}
-                    onClick={() => handleSelect("section", sec)}
-                    className={`text-left px-4 py-1.5 text-sm rounded transition-colors ${
-                      filters.section === sec
-                        ? "bg-blue-600 text-white font-bold"
-                        : "text-slate-600 hover:bg-slate-100"
-                    }`}
-                  >
-                    {sec}
-                  </button>
-                ))}
-              </div>
 
               {/* SIZES */}
               <div className="text-[10px] font-bold text-slate-400 uppercase px-4 pt-3 pb-1 border-b">

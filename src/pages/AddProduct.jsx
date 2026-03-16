@@ -134,19 +134,8 @@ export default function AddProduct() {
             </div>
           </div>
 
-          {/* Section, Price, Stock */}
+          {/* Stock */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <div className="flex flex-col gap-2">
-              <label className="text-sm font-bold text-slate-700">Section</label>
-              <select name="section" required onChange={handleChange} value={formData.section} className="border border-slate-300 rounded-lg p-2.5 bg-white">
-                <option value="">Select Section</option>
-                <option value="Men">Men</option>
-                <option value="Women">Women</option>
-                <option value="Kids">Kids</option>
-              </select>
-            </div>
-            
-           
             <div className="flex flex-col gap-2">
               <label className="text-sm font-bold text-slate-700">Stock Qty</label>
               <input name="stock_qty" required onChange={handleChange} type="number" className="border border-slate-300 rounded-lg p-2.5" />
