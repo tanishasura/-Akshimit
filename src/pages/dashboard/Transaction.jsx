@@ -3,6 +3,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { IoIosSearch } from "react-icons/io";
 import { printBill } from "../../utils/printBill";
+import { HiOutlineDownload } from "react-icons/hi";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function Transaction() {
   const location = useLocation();
@@ -14,6 +17,10 @@ export default function Transaction() {
   const [endDate, setEndDate] = useState("");
 
 
+
+  
+
+
   const [restock, setRestock] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,12 +30,48 @@ export default function Transaction() {
   const [refundReasonInput, setRefundReasonInput] = useState("");
   const [viewingRefundItem, setViewingRefundItem] = useState(null);
 
-  const isWithin7Days = (dateString) => {
-    const txnDate = new Date(dateString);
-    const now = new Date();
-    const diffTime = now.getTime() - txnDate.getTime();
-    const diffDays = diffTime / (1000 * 60 * 60 * 24); 
-    return diffDays <= 7;
+ const downloadPDFReport = () => {
+    const doc = new jsPDF();
+    
+    // Add title to the PDF
+    doc.setFontSize(18);
+    doc.text("Transaction History Report", 14, 22);
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    
+    // Add date range info if filters are active
+    const reportDate = `Report Generated: ${new Date().toLocaleString()}`;
+    doc.text(reportDate, 14, 30);
+    
+    if (startDate || endDate) {
+      doc.text(`Filter Range: ${startDate || 'Start'} to ${endDate || 'Present'}`, 14, 38);
+    }
+// Table
+    const tableColumn = ["ID", "Customer", "Date", "Amount", "Method"];
+    const tableRows = [];
+
+    filteredTransactions.forEach(txn => {
+      const txnData = [
+        txn.id,
+        txn.customer_name || "N/A",
+        new Date(txn.date).toLocaleDateString("en-GB"),
+        `INR ${txn.amount.toFixed(2)}`,
+        txn.status === "Refunded" ? "Refunded" : txn.method
+      ];
+      tableRows.push(txnData);
+    });
+
+    // Generate tableeeee
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: (startDate || endDate) ? 45 : 35,
+      theme: 'striped',
+      headStyles: { fillColor: [37, 99, 235] }, 
+    });
+
+    // Saveing pdf
+    doc.save(`Transaction_Report_${new Date().getTime()}.pdf`);
   };
 
   const session = JSON.parse(localStorage.getItem("user_session"));
@@ -374,9 +417,22 @@ export default function Transaction() {
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-4 bg-slate-50 border-b border-slate-100 flex flex-col xl:flex-row justify-between items-center gap-4">
+        <div className="flex flex-col gap-1 w-full xl:w-auto">
           <h3 className="font-bold text-2xl text-slate-700 w-full xl:w-auto">
             Transaction History
           </h3>
+
+          <div className="flex items-center gap-3">
+      <button 
+        onClick={downloadPDFReport}
+        className="flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-4 h-[40px] rounded-lg font-bold text-sm transition-all shadow-sm"
+        title="Download filtered transactions as PDF"
+      >
+        <HiOutlineDownload className="text-lg text-blue-600" />
+        Download Report
+      </button>
+    </div>
+            </div>
 
           <div className="flex flex-col md:flex-row w-full xl:w-auto gap-4">
             <div className="flex items-center gap-2 w-full md:w-auto">
