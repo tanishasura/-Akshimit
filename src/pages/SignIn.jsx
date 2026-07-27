@@ -35,37 +35,38 @@ export default function SignIn() {
   //     alert("Signup Successful");
   //   }
   // };
-const handleSubmit = (e) => {
-  e.preventDefault();
-  if (validate()) {
-    const registeredUsers = JSON.parse(localStorage.getItem("registered_users")) || [];
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (validate()) {
+      const registeredUsers =
+        JSON.parse(localStorage.getItem("registered_users")) || [];
 
-    const userFound = registeredUsers.find(
-      (u) => u.email === email && u.password === password
-    );
+      const userFound = registeredUsers.find(
+        (u) => u.email === email && u.password === password,
+      );
 
-    if (userFound) {
-      const userData = { 
-        email: userFound.email, 
-        role: userFound.role, 
-        name: userFound.name 
-      };
-      
-      localStorage.setItem("user_session", JSON.stringify(userData));
-      
-      alert(`Welcome, ${userFound.name}! Logged in as ${userFound.role}`);
-      navigate("/dashboard/checkout");
-    } else {
-      const emailExists = registeredUsers.find((u) => u.email === email);
-      if (!emailExists) {
-        alert("Account not found. Please register first.");
-        navigate("/signUp");
+      if (userFound) {
+        const userData = {
+          email: userFound.email,
+          role: userFound.role,
+          name: userFound.name,
+        };
+
+        localStorage.setItem("user_session", JSON.stringify(userData));
+
+        alert(`Welcome, ${userFound.name}! Logged in as ${userFound.role}`);
+        navigate("/dashboard/checkout");
       } else {
-        setErrors({ password: "Incorrect password. Please try again." });
+        const emailExists = registeredUsers.find((u) => u.email === email);
+        if (!emailExists) {
+          alert("Account not found. Please register first.");
+          navigate("/signUp");
+        } else {
+          setErrors({ password: "Incorrect password. Please try again." });
+        }
       }
     }
-  }
-};
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-200">
@@ -143,7 +144,7 @@ const handleSubmit = (e) => {
             <button className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
               Sign In
             </button>
-            
+
             {/* Added by request: Button to remove existing accounts
             <button 
               type="button"
@@ -157,16 +158,15 @@ const handleSubmit = (e) => {
             >
               Remove All User Accounts
             </button> */}
-
           </div>
 
           {/* <p className="text-md mt-4">
             New to Classifabs?{" "} */}
-            <div className="mt-4">
-                  <Link to="/signUp" className="text-blue-600">
-                       Create an account
-                     </Link>
-                  </div>
+          <div className="mt-4">
+            <Link to="/signUp" className="text-blue-600">
+              Create an account
+            </Link>
+          </div>
           {/* </p> */}
         </form>
       </div>
